@@ -1,4 +1,7 @@
-import type { ErrorResponse } from '@/api/services/types/api';
+import type { ApiErrorCode, ErrorResponse } from '@/api/services/types/api';
+import { getApiErrorCode } from '@/api/errors';
+import { HttpClient } from '@/api/http-client';
+import { i18n } from '@/plugins/i18n';
 import type { BaseStore } from '@/stores/util';
 import { AxiosError } from 'axios';
 import { useToast } from 'primevue';
@@ -73,7 +76,22 @@ export function useToastMessages() {
         }
     }
 
+    /**
+     * Error toast for a failed API call: a specific message for expected error codes (e.g. a
+     * CONFLICT on a duplicate name), otherwise a generic one.
+     */
+    function apiErrorToast(error: unknown, messages: Partial<Record<ApiErrorCode, string>> = {}) {
+        const code = getApiErrorCode(error);
+        const description =
+            (code && messages[code]) ??
+            (HttpClient.isNetworkError(error)
+                ? i18n.t('common.error.offline')
+                : i18n.t('common.error.description'));
+        errorToast(i18n.t('common.error.title'), description);
+    }
+
     return {
+        apiErrorToast,
         infoToast,
         successToast,
         errorToast,

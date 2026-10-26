@@ -1,3 +1,5 @@
+@use './variables.scss' as *;
+
 @mixin minb($breakpoint) {
     @media screen and (min-width: $breakpoint) {
         @content;
@@ -18,4 +20,37 @@
     white-space: nowrap;
     overflow: hidden;
     word-wrap: normal;
+}
+
+// Content column of a page
+@mixin page {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: $spacing-md;
+}
+
+// Row in a list card: at least a touch target high
+@mixin list-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm-md;
+    min-height: $touch-target + $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+// Card holding a list of rows
+@mixin list-card {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: $card-color;
+    border: 1px solid $border-color;
+    border-radius: $radius-xl;
+    overflow: hidden;
 }

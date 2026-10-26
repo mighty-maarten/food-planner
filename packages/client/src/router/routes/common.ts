@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
+import { dishesRoutes } from './dishes';
 
 const routesCommon = {
     PLAN: 'common_plan',
@@ -28,9 +29,16 @@ export const commonRoutes = [
         meta: { title: 'nav.shop' },
     },
     {
+        // Nested, so the "Gerechten" navigation item stays active on every library page
         path: '/gerechten',
-        name: routesCommon.DISHES,
-        component: () => import('@/views/DishesView.vue'),
-        meta: { title: 'nav.dishes' },
+        children: [
+            {
+                path: '',
+                name: routesCommon.DISHES,
+                component: () => import('@/views/dishes/DishesView.vue'),
+                meta: { title: 'nav.dishes' },
+            },
+            ...dishesRoutes,
+        ],
     },
 ] satisfies RouteRecordRaw[];

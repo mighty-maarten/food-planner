@@ -121,6 +121,181 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/api/categories': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All categories in their default order */
+        get: operations['getCategories'];
+        put?: never;
+        post: operations['createCategory'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/categories/order': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change the default order of the categories */
+        put: operations['reorderCategories'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/categories/{categoryId}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations['updateCategory'];
+        post?: never;
+        /** Delete a category, its ingredients become uncategorised */
+        delete: operations['deleteCategory'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/stores': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['getStores'];
+        put?: never;
+        post: operations['createStore'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/stores/{storeId}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations['updateStore'];
+        post?: never;
+        delete: operations['deleteStore'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/stores/{storeId}/category-order': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the order of the categories on the route through the store */
+        put: operations['updateStoreCategoryOrder'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/ingredients': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The whole ingredient catalogue, sorted by name */
+        get: operations['getIngredients'];
+        put?: never;
+        post: operations['createIngredient'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/ingredients/{ingredientId}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations['updateIngredient'];
+        post?: never;
+        /**
+         * Delete an ingredient
+         * @description Fails with CONFLICT while dishes use it; `details.dishes` lists them ({ id, name }).
+         */
+        delete: operations['deleteIngredient'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/dishes': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All dishes sorted by name, without the recipe texts */
+        get: operations['getDishes'];
+        put?: never;
+        /** Create a dish, new ingredient names are added to the catalogue */
+        post: operations['createDish'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/dishes/{dishId}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['getDish'];
+        /**
+         * Replace a dish and its ingredient lines
+         * @description New ingredient names are added to the catalogue.
+         */
+        put: operations['updateDish'];
+        post?: never;
+        delete: operations['deleteDish'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -165,6 +340,80 @@ export interface components {
             accessToken: string;
             user: components['schemas']['User'];
         };
+        Category: {
+            id: string;
+            name: string;
+            /** @description Default order, used when no store is selected. */
+            position: number;
+        };
+        CategoryRequest: {
+            name: string;
+        };
+        CategoryOrderRequest: {
+            /** @description Every category id, in the new order. */
+            categoryIds: string[];
+        };
+        Store: {
+            id: string;
+            name: string;
+            /** @description Every category id in the order of the route through this store. Categories without a position in this store follow in their default order. */
+            categoryIds: string[];
+        };
+        StoreRequest: {
+            name: string;
+        };
+        Ingredient: {
+            id: string;
+            name: string;
+            categoryId: string | null;
+            /** @description Stores where it is usually bought. */
+            storeIds: string[];
+            /** @description Number of dishes using this ingredient. */
+            dishCount: number;
+        };
+        IngredientRequest: {
+            name: string;
+            categoryId?: string | null;
+            storeIds: string[];
+        };
+        DishListItem: {
+            id: string;
+            name: string;
+            /** @description Ingredient names in the order of the dish. */
+            ingredientNames: string[];
+            /** @description Has a recipe text or a source URL. */
+            hasRecipe: boolean;
+        };
+        DishIngredient: {
+            ingredientId: string;
+            name: string;
+            categoryId: string | null;
+            amount: number | null;
+            unit: string | null;
+        };
+        Dish: {
+            id: string;
+            name: string;
+            /** @description Markdown. */
+            recipe: string | null;
+            sourceUrl: string | null;
+            servings: number | null;
+            ingredients: components['schemas']['DishIngredient'][];
+        };
+        DishIngredientRequest: {
+            /** @description Ingredient name, added to the catalogue if it is new. */
+            name: string;
+            amount?: number | null;
+            unit?: string | null;
+        };
+        DishRequest: {
+            name: string;
+            /** @description Markdown. */
+            recipe?: string | null;
+            sourceUrl?: string | null;
+            servings?: number | null;
+            ingredients: components['schemas']['DishIngredientRequest'][];
+        };
     };
     responses: never;
     parameters: never;
@@ -178,6 +427,18 @@ export type ErrorResponse = components['schemas']['ErrorResponse'];
 export type LoginRequest = components['schemas']['LoginRequest'];
 export type User = components['schemas']['User'];
 export type AuthResponse = components['schemas']['AuthResponse'];
+export type Category = components['schemas']['Category'];
+export type CategoryRequest = components['schemas']['CategoryRequest'];
+export type CategoryOrderRequest = components['schemas']['CategoryOrderRequest'];
+export type Store = components['schemas']['Store'];
+export type StoreRequest = components['schemas']['StoreRequest'];
+export type Ingredient = components['schemas']['Ingredient'];
+export type IngredientRequest = components['schemas']['IngredientRequest'];
+export type DishListItem = components['schemas']['DishListItem'];
+export type DishIngredient = components['schemas']['DishIngredient'];
+export type Dish = components['schemas']['Dish'];
+export type DishIngredientRequest = components['schemas']['DishIngredientRequest'];
+export type DishRequest = components['schemas']['DishRequest'];
 export type $defs = Record<string, never>;
 export interface operations {
     getStatus: {
@@ -364,6 +625,587 @@ export interface operations {
                 };
                 content: {
                     'application/json': components['schemas']['User'];
+                };
+            };
+        };
+    };
+    getCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Category'][];
+                };
+            };
+        };
+    };
+    createCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['CategoryRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Category'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    reorderCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['CategoryOrderRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Category'][];
+                };
+            };
+        };
+    };
+    updateCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['CategoryRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Category'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deleteCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getStores: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Store'][];
+                };
+            };
+        };
+    };
+    createStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['StoreRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Store'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    updateStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['StoreRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Store'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deleteStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    updateStoreCategoryOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['CategoryOrderRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Store'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getIngredients: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Ingredient'][];
+                };
+            };
+        };
+    };
+    createIngredient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['IngredientRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Ingredient'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    updateIngredient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ingredientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['IngredientRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Ingredient'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deleteIngredient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ingredientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getDishes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['DishListItem'][];
+                };
+            };
+        };
+    };
+    createDish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['DishRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Dish'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getDish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dishId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Dish'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    updateDish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dishId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['DishRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Dish'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deleteDish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dishId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
                 };
             };
         };

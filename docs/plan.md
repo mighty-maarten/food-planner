@@ -31,6 +31,19 @@ home.
   person, store B for the other).
 - Categories (Groenten & fruit, Zuivel, Huishouden, ...) with a separate order per store, matching
   the route through that store.
+- Decided while building milestone 2:
+  - Names of categories, stores, ingredients and dishes are unique, case-insensitive (409
+    `CONFLICT`).
+  - An ingredient's category is optional ("Zonder categorie", listed first on the ingredients
+    screen), so ingredients can be typed quickly in the dish form and added by the import.
+  - Dish ingredient lines are sent by ingredient name; unknown names are added to the catalogue.
+    The same ingredient twice in one dish is rejected. Amount is a number (`0,5`), unit free text.
+  - An ingredient used by a dish cannot be deleted (409 with the dishes). Deleting a category makes
+    its ingredients uncategorised; deleting a store removes it from the ingredients.
+  - Categories have a default order (used without a store); a store's route lists every category,
+    categories it has no position for (e.g. new ones) follow in the default order.
+  - Reordering uses up/down buttons instead of drag and drop (reliable with one thumb).
+  - Migration 002 adds a default set of Dutch categories.
 
 ### Plans (build mode, "Bouwen")
 
@@ -97,8 +110,9 @@ Wo: Pitta met bloemkool/courgette
 
 1. **Scaffold** (done): monorepo, auth, user CLI, Dutch app shell, PWA, zod config, logging,
    error envelope, OpenAPI client types.
-2. **Library**: categories, stores with their category order, ingredient catalogue (category,
-   default stores), dishes with ingredient lines and recipe. API + screens under "Gerechten".
+2. **Library** (done): categories, stores with their category order, ingredient catalogue
+   (category, default stores), dishes with ingredient lines and recipe. API + screens under
+   "Gerechten".
 3. **Build mode**: plans with days and dishes, shopping list generation from the planned dishes
    (pick ingredients, merge, needed-by date), free items, carry over from the previous plan.
 4. **Shop mode**: store filter, grouping by category in store order, ticking, offline cache and
