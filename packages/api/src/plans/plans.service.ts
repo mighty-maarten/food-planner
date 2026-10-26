@@ -7,6 +7,7 @@ import { DatabaseHelper } from '../database/database.helper.js';
 import { ListItemEntity } from '../database/entities/list-item.entity.js';
 import { PlanEntity } from '../database/entities/plan.entity.js';
 import { IngredientsService } from '../ingredients/ingredients.service.js';
+import { PlanEventsService } from './plan-events.service.js';
 import {
     assemblePlan,
     groupSources,
@@ -14,13 +15,16 @@ import {
     type PlanRows,
     toListItem,
 } from './plan-assembly.js';
-import type {
-    CarryOverCandidates,
-    ListItemRequest,
-    ListItemUpdateRequest,
-    Plan,
-    PlanRequest,
-    PlanSummary,
+import {
+    type CarryOverCandidates,
+    type ListItem,
+    type ListItemCheckRequest,
+    type ListItemRequest,
+    type ListItemUpdateRequest,
+    type Plan,
+    PlanEventKind,
+    type PlanRequest,
+    type PlanSummary,
 } from './types.js';
 
 /** Longest plan: 31 days (end date included) */
@@ -59,6 +63,7 @@ export class PlansService {
         @InjectRepository(ListItemEntity)
         private listItemRepository: Repository<ListItemEntity>,
         private ingredientsService: IngredientsService,
+        private planEvents: PlanEventsService,
     ) {}
 
     /** All plans, newest first */
@@ -115,7 +120,7 @@ export class PlansService {
     }
 
     /** Changes the dates; days that fall outside the new range lose their dish */
-    public async updatePlan(planId: string, request: PlanRequest): Promise<Plan> {
+    public async updatePlan(planId: string, request: PlanRequest, userId: string): Promise<Plan> {
         await this.getEntity(planId);
         await this.assertValidRange(request, planId);
         await this.planRepository.manager.transaction(async (manager) => {
@@ -129,22 +134,28 @@ export class PlansService {
             );
             await PlansService.removeUnneededItems(manager, planId);
         });
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
     }
 
-    public async deletePlan(planId: string): Promise<void> {
+    public async deletePlan(planId: string, userId: string): Promise<void> {
         const result = await this.planRepository.delete(planId);
         if (!result.affected) {
             throw PlansService.notFound(planId);
         }
         this.logger.log('Plan deleted', { planId });
+        this.planEvents.emit(planId, { kind: PlanEventKind.PLAN_CHANGED, byUserId: userId });
     }
 
     /**
      * Plans a dish on a day (null: no cooking). A different dish clears the ingredients picked for
      * that day; list items no other day needs disappear.
      */
-    public async setDayDish(planId: string, date: string, dishId: string | null): Promise<Plan> {
+    public async setDayDish(
+        planId: string,
+        date: string,
+        dishId: string | null,
+        userId: string,
+    ): Promise<Plan> {
         await this.assertDayOfPlan(planId, date);
         try {
             await this.planRepository.manager.transaction(async (manager) => {
@@ -168,7 +179,7 @@ export class PlansService {
             }
             throw error;
         }
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
     }
 
     /** Sets which ingredients of the day's dish need to be bought (the rest is at home) */
@@ -216,7 +227,7 @@ export class PlansService {
             );
             await PlansService.removeUnneededItems(manager, planId);
         });
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
     }
 
     /** Adds an item without a dish (brood, waspoeder); merges with an existing line */
@@ -241,13 +252,14 @@ export class PlansService {
                 ],
             );
         });
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
     }
 
     public async updateItem(
         planId: string,
         itemId: string,
         request: ListItemUpdateRequest,
+        userId: string,
     ): Promise<Plan> {
         const result = await this.listItemRepository.update(
             { id: itemId, planId },
@@ -256,16 +268,54 @@ export class PlansService {
         if (!result.affected) {
             throw PlansService.itemNotFound(itemId);
         }
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
     }
 
     /** Removes the line, also from the days it was picked for */
-    public async deleteItem(planId: string, itemId: string): Promise<Plan> {
+    public async deleteItem(planId: string, itemId: string, userId: string): Promise<Plan> {
         const result = await this.listItemRepository.delete({ id: itemId, planId });
         if (!result.affected) {
             throw PlansService.itemNotFound(itemId);
         }
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
+    }
+
+    /**
+     * Ticks an item off (or back on) in shop mode. The tick only applies when it is newer than
+     * the last change of the item, so the last tick wins, also when a tick made offline reaches
+     * the server later. Returns the current state of the item either way.
+     */
+    public async setItemChecked(
+        planId: string,
+        itemId: string,
+        request: ListItemCheckRequest,
+        userId: string,
+    ): Promise<ListItem> {
+        // A device clock running ahead must not win every later tick
+        const now = new Date();
+        const at = new Date(Math.min(new Date(request.at).getTime(), now.getTime()));
+        const result = await this.listItemRepository
+            .createQueryBuilder()
+            .update(ListItemEntity)
+            .set({
+                checkedAt: request.checked ? at : null,
+                checkedById: request.checked ? userId : null,
+                checkChangedAt: at,
+                lastUpdatedOn: now,
+            })
+            .where('id = :itemId AND plan_id = :planId', { itemId, planId })
+            .andWhere('(check_changed_at IS NULL OR check_changed_at <= :at)', { at })
+            .execute();
+
+        const item = await this.getItem(planId, itemId);
+        if (result.affected) {
+            this.planEvents.emit(planId, {
+                kind: PlanEventKind.ITEM_CHECKED,
+                item,
+                byUserId: userId,
+            });
+        }
+        return item;
     }
 
     /** Items of the previous plan that were not ticked off and are not on this list yet */
@@ -318,7 +368,30 @@ export class PlansService {
             [planId, itemIds, userId],
         );
         this.logger.log('Items carried over', { planId, count: itemIds.length });
-        return this.getPlan(planId);
+        return this.changed(planId, userId);
+    }
+
+    /** Tells the live clients and returns the new plan */
+    private async changed(planId: string, userId: string): Promise<Plan> {
+        const plan = await this.getPlan(planId);
+        this.planEvents.emit(planId, { kind: PlanEventKind.PLAN_CHANGED, byUserId: userId });
+        return plan;
+    }
+
+    private async getItem(planId: string, itemId: string): Promise<ListItem> {
+        const manager = this.planRepository.manager;
+        const [row] = await manager.query<ListItemRow[]>(
+            `${ITEM_SELECT} WHERE li.id = $1 AND li.plan_id = $2`,
+            [itemId, planId],
+        );
+        if (!row) {
+            throw PlansService.itemNotFound(itemId);
+        }
+        const sources = await manager.query<PlanRows['sources']>(
+            `${SOURCE_SELECT} WHERE s.list_item_id = $1`,
+            [itemId],
+        );
+        return toListItem(row, sources);
     }
 
     private async assertValidRange(request: PlanRequest, planId?: string): Promise<void> {

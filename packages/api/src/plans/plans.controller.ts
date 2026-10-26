@@ -9,6 +9,8 @@ import {
     ParseUUIDPipe,
     Post,
     Put,
+    Sse,
+    type MessageEvent,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -18,19 +20,26 @@ import {
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiOperation,
+    ApiProduces,
     ApiTags,
 } from '@nestjs/swagger';
+import { interval, map, merge, type Observable } from 'rxjs';
 import { CurrentUserId } from '../auth/current-user.decorator.js';
 import { ErrorResponse } from '../common/error-response.js';
 import { ParseIsoDatePipe } from '../common/parse-date.pipe.js';
 import { routeParams } from '../route-params.js';
+import { PlanEventsService } from './plan-events.service.js';
 import { PlansService } from './plans.service.js';
 import {
     CarryOverCandidates,
     CarryOverRequest,
+    ListItem,
+    ListItemCheckRequest,
     ListItemRequest,
     ListItemUpdateRequest,
     Plan,
+    PlanEvent,
+    PlanEventKind,
     PlanDayIngredientsRequest,
     PlanDayRequest,
     PlanRequest,
@@ -41,6 +50,9 @@ const PLAN = `:${routeParams.planId}`;
 const DAY = `${PLAN}/days/:${routeParams.date}`;
 const ITEM = `${PLAN}/items/:${routeParams.itemId}`;
 
+// Below the idle timeouts of proxies (Caddy keeps idle upstream connections for 2 minutes)
+const PING_INTERVAL_MS = 25_000;
+
 // Every change returns the whole plan: days, dishes and the shopping list stay consistent in
 // the client with one response.
 @ApiTags('plans')
@@ -49,7 +61,10 @@ const ITEM = `${PLAN}/items/:${routeParams.itemId}`;
 @ApiBadRequestResponse({ type: ErrorResponse })
 @Controller()
 export class PlansController {
-    constructor(private readonly plansService: PlansService) {}
+    constructor(
+        private readonly plansService: PlansService,
+        private readonly planEvents: PlanEventsService,
+    ) {}
 
     @Get()
     @ApiOperation({ summary: 'All plans, newest first' })
@@ -83,15 +98,19 @@ export class PlansController {
     updatePlan(
         @Param(routeParams.planId, ParseUUIDPipe) planId: string,
         @Body() request: PlanRequest,
+        @CurrentUserId() userId: string,
     ): Promise<Plan> {
-        return this.plansService.updatePlan(planId, request);
+        return this.plansService.updatePlan(planId, request, userId);
     }
 
     @Delete(PLAN)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse()
-    deletePlan(@Param(routeParams.planId, ParseUUIDPipe) planId: string): Promise<void> {
-        return this.plansService.deletePlan(planId);
+    deletePlan(
+        @Param(routeParams.planId, ParseUUIDPipe) planId: string,
+        @CurrentUserId() userId: string,
+    ): Promise<void> {
+        return this.plansService.deletePlan(planId, userId);
     }
 
     @Put(DAY)
@@ -104,8 +123,9 @@ export class PlansController {
         @Param(routeParams.planId, ParseUUIDPipe) planId: string,
         @Param(routeParams.date, ParseIsoDatePipe) date: string,
         @Body() request: PlanDayRequest,
+        @CurrentUserId() userId: string,
     ): Promise<Plan> {
-        return this.plansService.setDayDish(planId, date, request.dishId);
+        return this.plansService.setDayDish(planId, date, request.dishId, userId);
     }
 
     @Put(`${DAY}/ingredients`)
@@ -142,8 +162,9 @@ export class PlansController {
         @Param(routeParams.planId, ParseUUIDPipe) planId: string,
         @Param(routeParams.itemId, ParseUUIDPipe) itemId: string,
         @Body() request: ListItemUpdateRequest,
+        @CurrentUserId() userId: string,
     ): Promise<Plan> {
-        return this.plansService.updateItem(planId, itemId, request);
+        return this.plansService.updateItem(planId, itemId, request, userId);
     }
 
     @Delete(ITEM)
@@ -152,8 +173,46 @@ export class PlansController {
     deleteListItem(
         @Param(routeParams.planId, ParseUUIDPipe) planId: string,
         @Param(routeParams.itemId, ParseUUIDPipe) itemId: string,
+        @CurrentUserId() userId: string,
     ): Promise<Plan> {
-        return this.plansService.deleteItem(planId, itemId);
+        return this.plansService.deleteItem(planId, itemId, userId);
+    }
+
+    @Put(`${ITEM}/checked`)
+    @ApiOperation({
+        summary: 'Tick an item off (or back on) in shop mode',
+        description:
+            'The last tick wins, by the time it was made on the device. Returns the current ' +
+            'state of the item, also when a newer tick was already there.',
+    })
+    @ApiOkResponse({ type: ListItem })
+    setListItemChecked(
+        @Param(routeParams.planId, ParseUUIDPipe) planId: string,
+        @Param(routeParams.itemId, ParseUUIDPipe) itemId: string,
+        @Body() request: ListItemCheckRequest,
+        @CurrentUserId() userId: string,
+    ): Promise<ListItem> {
+        return this.plansService.setItemChecked(planId, itemId, request, userId);
+    }
+
+    @Sse(`${PLAN}/events`)
+    @ApiOperation({
+        summary: 'Live updates of a plan (server-sent events)',
+        description:
+            'Every message has a PlanEvent as JSON `data`. A ping is sent every 25 seconds. ' +
+            'Needs the Authorization header, so clients read it with fetch, not EventSource.',
+    })
+    @ApiProduces('text/event-stream')
+    @ApiOkResponse({ type: PlanEvent })
+    getPlanEvents(
+        @Param(routeParams.planId, ParseUUIDPipe) planId: string,
+    ): Observable<MessageEvent> {
+        const ping = interval(PING_INTERVAL_MS).pipe(
+            map((): PlanEvent => ({ kind: PlanEventKind.PING })),
+        );
+        return merge(this.planEvents.forPlan(planId), ping).pipe(
+            map((event): MessageEvent => ({ data: event })),
+        );
     }
 
     @Get(`${PLAN}/carry-over`)

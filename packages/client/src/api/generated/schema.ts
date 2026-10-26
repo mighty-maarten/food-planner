@@ -412,6 +412,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/api/plans/{planId}/items/{itemId}/checked': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Tick an item off (or back on) in shop mode
+         * @description The last tick wins, by the time it was made on the device. Returns the current state of the item, also when a newer tick was already there.
+         */
+        put: operations['setListItemChecked'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}/events': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Live updates of a plan (server-sent events)
+         * @description Every message has a PlanEvent as JSON `data`. A ping is sent every 25 seconds. Needs the Authorization header, so clients read it with fetch, not EventSource.
+         */
+        get: operations['getPlanEvents'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/api/plans/{planId}/carry-over': {
         parameters: {
             query?: never;
@@ -642,6 +682,19 @@ export interface components {
             /** @description YYYY-MM-DD. Null: derived from the planned dishes again. */
             neededBy: string | null;
         };
+        ListItemCheckRequest: {
+            checked: boolean;
+            /** @description ISO timestamp of the tick on the device. Only applied when newer than the last change of the item (the last tick wins); future times count as now. */
+            at: string;
+        };
+        /** @enum {string} */
+        PlanEventKind: 'item-checked' | 'plan-changed' | 'ping';
+        PlanEvent: {
+            kind: components['schemas']['PlanEventKind'];
+            item?: components['schemas']['ListItem'];
+            /** @description Who changed it. */
+            byUserId?: string | null;
+        };
         PlanRange: {
             id: string;
             /** @description YYYY-MM-DD */
@@ -696,6 +749,9 @@ export type PlanDayRequest = components['schemas']['PlanDayRequest'];
 export type PlanDayIngredientsRequest = components['schemas']['PlanDayIngredientsRequest'];
 export type ListItemRequest = components['schemas']['ListItemRequest'];
 export type ListItemUpdateRequest = components['schemas']['ListItemUpdateRequest'];
+export type ListItemCheckRequest = components['schemas']['ListItemCheckRequest'];
+export type PlanEventKind = components['schemas']['PlanEventKind'];
+export type PlanEvent = components['schemas']['PlanEvent'];
 export type PlanRange = components['schemas']['PlanRange'];
 export type CarryOverCandidates = components['schemas']['CarryOverCandidates'];
 export type CarryOverRequest = components['schemas']['CarryOverRequest'];
@@ -1858,6 +1914,85 @@ export interface operations {
                 };
                 content: {
                     'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    setListItemChecked: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ListItemCheckRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ListItem'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getPlanEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'text/event-stream': components['schemas']['PlanEvent'];
                 };
             };
             400: {

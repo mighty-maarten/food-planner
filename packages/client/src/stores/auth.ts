@@ -4,6 +4,7 @@ import { useStoreCreationUtils } from './util';
 import { AuthApi } from '@/api/services/auth-api';
 import { HttpClient } from '@/api/http-client';
 import type { AuthResponse, LoginRequest, User } from '@/api/services/types/auth';
+import { ShopCache } from '@/offline/shop-cache';
 
 // The user (not the token) is cached so the installed app can start without a connection
 const USER_STORAGE_KEY = 'fp_user';
@@ -101,6 +102,8 @@ export const useAuthStore = defineStore('auth', () => {
                 await AuthApi.logout();
             } finally {
                 clearSession();
+                // The cached shopping list and unsent ticks belong to this session
+                await ShopCache.clear();
             }
         });
     }

@@ -29,4 +29,8 @@ export class ListItemEntity extends BaseEntity {
 
     @Column({ type: 'uuid', nullable: true })
     checkedById!: string | null;
+
+    /** When the checked state last changed on the device; the last tick wins */
+    @Column({ type: 'timestamptz', nullable: true })
+    checkChangedAt!: Date | null;
 }
