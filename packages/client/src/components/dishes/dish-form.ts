@@ -31,12 +31,15 @@ export function toFormState(dish?: Dish): DishFormState {
         servings: dish.servings,
         sourceUrl: dish.sourceUrl ?? '',
         recipe: dish.recipe ?? '',
-        lines: dish.ingredients.map((line) => ({
-            key: nextKey++,
-            name: line.name,
-            amount: line.amount,
-            unit: line.unit ?? '',
-        })),
+        lines: dish.ingredients.length
+            ? dish.ingredients.map((line) => ({
+                  key: nextKey++,
+                  name: line.name,
+                  amount: line.amount,
+                  unit: line.unit ?? '',
+              }))
+            : // Something to type in right away, e.g. for a dish created from a plan
+              [emptyLine()],
     };
 }
 

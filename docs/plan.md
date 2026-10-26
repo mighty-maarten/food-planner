@@ -56,6 +56,23 @@ home.
   buy fresh things later. The same ingredient in several dishes becomes one line with the earliest
   date and the dishes it comes from. Editable.
 - Unticked items of the previous plan can be carried over to the new one.
+- Decided while building milestone 3:
+  - Plans don't overlap (409 `CONFLICT`), so "the plan of today" and "the previous plan" are
+    unambiguous. A plan lasts at most 31 days. The current plan is the one with today in it, else
+    the first one coming up, else the most recent.
+  - A new plan starts on the coming Thursday, or the day after the last plan if that runs longer,
+    and ends on the first Wednesday after its start.
+  - One dish per day. Ingredients are not picked by default (only what isn't at home). Another
+    dish on a day clears that day's picks; changing the plan's dates drops days outside the range.
+  - The list has one line per ingredient (merged across days). A line picked only for dishes
+    disappears with its last pick; a line added freely or carried over stays. Free items are
+    ingredients too (added to the catalogue), so shop mode can group them by category and store.
+  - "Needed by" is the first day a planned dish uses it, unless set by hand; the amounts per dish
+    are shown with the line, not summed.
+  - Carry over offers the unticked items of the previous plan that are not on the new list; they
+    become free items. Ticking itself (`checked_at`, `checked_by`) is part of milestone 4.
+  - Every change returns the whole plan; the client sends changes to a plan one at a time and
+    shows ingredient picks immediately.
 
 ### Shop mode ("Winkelen")
 
@@ -113,8 +130,8 @@ Wo: Pitta met bloemkool/courgette
 2. **Library** (done): categories, stores with their category order, ingredient catalogue
    (category, default stores), dishes with ingredient lines and recipe. API + screens under
    "Gerechten".
-3. **Build mode**: plans with days and dishes, shopping list generation from the planned dishes
-   (pick ingredients, merge, needed-by date), free items, carry over from the previous plan.
+3. **Build mode** (done): plans with days and dishes, shopping list generation from the planned
+   dishes (pick ingredients, merge, needed-by date), free items, carry over from the previous plan.
 4. **Shop mode**: store filter, grouping by category in store order, ticking, offline cache and
    sync queue (IndexedDB), live updates over SSE.
 5. **Import**: parse the notes export, cluster duplicates, review file, seed script.

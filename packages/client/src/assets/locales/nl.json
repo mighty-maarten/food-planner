@@ -42,8 +42,92 @@
     "plan": {
         "empty": {
             "title": "Nog geen weekmenu",
-            "description": "Hier plan je binnenkort je gerechten per dag en stel je je boodschappenlijst samen."
-        }
+            "description": "Plan je gerechten per dag en stel er je boodschappenlijst mee samen."
+        },
+        "new": "Nieuw weekmenu",
+        "all": "Alle weekmenu's",
+        "edit_dates": "Data wijzigen",
+        "delete": {
+            "action": "Weekmenu verwijderen",
+            "confirm": "Wil je het weekmenu van {range} verwijderen, met de boodschappenlijst?",
+            "done": "Weekmenu verwijderd"
+        },
+        "not_found": "Dit weekmenu bestaat niet (meer).",
+        "tabs": {
+            "menu": "Menu",
+            "list": "Boodschappen"
+        },
+        "today": "Vandaag",
+        "dates": {
+            "title_new": "Nieuw weekmenu",
+            "title_edit": "Data wijzigen",
+            "start": "Van",
+            "end": "Tot en met",
+            "invalid": "De einddatum ligt op of na de startdatum, en een weekmenu duurt hoogstens 31 dagen.",
+            "shrink_warning": "Dagen die buiten de nieuwe data vallen, verliezen hun gerecht.",
+            "conflict": "Deze data overlappen met een ander weekmenu ({range}).",
+            "create": "Aanmaken"
+        },
+        "day": {
+            "choose_dish": "Gerecht kiezen",
+            "change_dish": "Ander gerecht",
+            "no_cooking": "Niet koken",
+            "to_buy": "Wat moet je kopen?",
+            "to_buy_hint": "Tik aan wat je niet in huis hebt.",
+            "all": "Alles",
+            "none": "Niets",
+            "no_ingredients": "Dit gerecht heeft nog geen ingrediënten.",
+            "add_ingredients": "Ingrediënten toevoegen",
+            "open_dish": "Gerecht bekijken",
+            "selected_count": "{count} op de lijst | {count} op de lijst"
+        },
+        "picker": {
+            "title": "Gerecht voor {day}",
+            "search": "Zoek of typ een nieuw gerecht",
+            "create": "Nieuw gerecht “{name}”",
+            "no_cooking": "Niet koken",
+            "no_dishes": "Nog geen gerechten. Typ een naam om er een te maken."
+        },
+        "list": {
+            "add_placeholder": "Iets toevoegen, bv. brood",
+            "empty": {
+                "title": "Nog niets op de lijst",
+                "description": "Tik bij een gerecht aan wat je moet kopen, of voeg hierboven iets toe."
+            },
+            "count": "{count} item | {count} items",
+            "needed_by": "nodig {date}",
+            "extra": "los toegevoegd",
+            "checked_by": "afgevinkt door {name}",
+            "uncategorised": "Zonder categorie"
+        },
+        "item": {
+            "title": "Boodschap",
+            "note": "Notitie",
+            "note_placeholder": "bv. 2 pakken, de grote",
+            "needed_by": "Nodig tegen",
+            "needed_by_auto": "Automatisch ({date})",
+            "needed_by_auto_none": "Automatisch (geen datum)",
+            "for_dishes": "Voor",
+            "remove": "Van de lijst halen",
+            "removed": "Van de lijst gehaald"
+        },
+        "carry_over": {
+            "banner": "{count} item van het vorige weekmenu niet afgevinkt | {count} items van het vorige weekmenu niet afgevinkt",
+            "review": "Bekijken",
+            "title": "Overnemen van {range}",
+            "description": "Deze boodschappen zijn vorige keer niet gekocht. Kies wat je wil overnemen.",
+            "submit": "Overnemen ({count}) | Overnemen ({count})",
+            "done": "{count} item overgenomen | {count} items overgenomen"
+        },
+        "list_page": {
+            "summary": "{dishes} · {items}",
+            "dishes": "geen gerechten | 1 gerecht | {count} gerechten",
+            "items": "geen boodschappen | 1 boodschap | {count} boodschappen",
+            "current": "Nu"
+        },
+        "previous": "Vorig weekmenu",
+        "next": "Volgend weekmenu",
+        "actions": "Acties"
     },
     "shop": {
         "empty": {
@@ -100,7 +184,8 @@
             "leave_title": "Niet opgeslagen",
             "leave_confirm": "Je wijzigingen zijn nog niet opgeslagen. Wil je ze weggooien?",
             "leave": "Weggooien",
-            "stay": "Verder bewerken"
+            "stay": "Verder bewerken",
+            "back_to_plan": "Terug naar weekmenu"
         },
         "delete": {
             "confirm": "Wil je “{name}” verwijderen?",

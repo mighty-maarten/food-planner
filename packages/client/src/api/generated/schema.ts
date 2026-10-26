@@ -296,6 +296,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/api/plans': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All plans, newest first */
+        get: operations['getPlans'];
+        put?: never;
+        /**
+         * Create a plan
+         * @description CONFLICT when the dates overlap.
+         */
+        post: operations['createPlan'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['getPlan'];
+        /**
+         * Change the dates of a plan
+         * @description Days outside the new range lose their dish. CONFLICT when the dates overlap.
+         */
+        put: operations['updatePlan'];
+        post?: never;
+        delete: operations['deletePlan'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}/days/{date}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Plan a dish on a day (null: no cooking)
+         * @description Another dish clears the ingredients picked for that day.
+         */
+        put: operations['setPlanDayDish'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}/days/{date}/ingredients': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Pick the ingredients of the day's dish to buy */
+        put: operations['setPlanDayIngredients'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}/items': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an item without a dish
+         * @description New names are added to the ingredient catalogue.
+         */
+        post: operations['addListItem'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}/items/{itemId}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change the note and the needed-by date of an item */
+        put: operations['updateListItem'];
+        post?: never;
+        /** Remove an item, also from the days it was picked for */
+        delete: operations['deleteListItem'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/api/plans/{planId}/carry-over': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open items of the previous plan that are not on this list */
+        get: operations['getCarryOverCandidates'];
+        put?: never;
+        /** Take over open items of the previous plan */
+        post: operations['carryOverItems'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -414,6 +548,117 @@ export interface components {
             servings?: number | null;
             ingredients: components['schemas']['DishIngredientRequest'][];
         };
+        PlanSummary: {
+            id: string;
+            /** @description YYYY-MM-DD */
+            startDate: string;
+            /** @description YYYY-MM-DD, included */
+            endDate: string;
+            /** @description Days with a dish. */
+            dishCount: number;
+            itemCount: number;
+            /** @description Items not ticked off yet. */
+            openItemCount: number;
+        };
+        PlanRequest: {
+            /** @description YYYY-MM-DD */
+            startDate: string;
+            /** @description YYYY-MM-DD, included, at most 30 days after the start */
+            endDate: string;
+        };
+        PlanDish: {
+            id: string;
+            name: string;
+            ingredients: components['schemas']['DishIngredient'][];
+        };
+        PlanDay: {
+            /** @description YYYY-MM-DD */
+            date: string;
+            /** @description Null: no cooking. */
+            dish: components['schemas']['PlanDish'] | null;
+            /** @description Ingredients of the dish that are on the shopping list for this day. */
+            selectedIngredientIds: string[];
+        };
+        ListItemSource: {
+            /** @description YYYY-MM-DD */
+            date: string;
+            dishId: string;
+            dishName: string;
+            amount: number | null;
+            unit: string | null;
+        };
+        UserReference: {
+            id: string;
+            name: string;
+        };
+        ListItem: {
+            id: string;
+            ingredientId: string;
+            name: string;
+            categoryId: string | null;
+            /** @description Default stores of the ingredient. */
+            storeIds: string[];
+            note: string | null;
+            /** @description YYYY-MM-DD: the override, else the first day a planned dish uses it. Null: no date. */
+            neededBy: string | null;
+            /** @description neededBy was set by hand. */
+            neededByOverride: boolean;
+            /** @description Added freely or carried over, not (only) for a dish. */
+            manual: boolean;
+            /** @description The planned dishes it is bought for. */
+            sources: components['schemas']['ListItemSource'][];
+            addedBy: components['schemas']['UserReference'] | null;
+            /** @description ISO timestamp. */
+            checkedAt: string | null;
+            checkedBy: components['schemas']['UserReference'] | null;
+        };
+        Plan: {
+            id: string;
+            /** @description YYYY-MM-DD */
+            startDate: string;
+            /** @description YYYY-MM-DD, included */
+            endDate: string;
+            /** @description Every day of the plan, in order. */
+            days: components['schemas']['PlanDay'][];
+            items: components['schemas']['ListItem'][];
+        };
+        PlanDayRequest: {
+            /** @description Null: no cooking. */
+            dishId: string | null;
+        };
+        PlanDayIngredientsRequest: {
+            /** @description The ingredients of the dish to buy for this day (replaces the selection). */
+            ingredientIds: string[];
+        };
+        ListItemRequest: {
+            /** @description Ingredient name, added to the catalogue if it is new. */
+            name: string;
+            note?: string | null;
+            /** @description YYYY-MM-DD */
+            neededBy?: string | null;
+        };
+        ListItemUpdateRequest: {
+            note: string | null;
+            /** @description YYYY-MM-DD. Null: derived from the planned dishes again. */
+            neededBy: string | null;
+        };
+        PlanRange: {
+            id: string;
+            /** @description YYYY-MM-DD */
+            startDate: string;
+            /** @description YYYY-MM-DD, included */
+            endDate: string;
+        };
+        CarryOverCandidates: {
+            /** @description The previous plan. */
+            plan: components['schemas']['PlanRange'] | null;
+            /** @description Its open items that are not on this list. */
+            items: components['schemas']['ListItem'][];
+        };
+        CarryOverRequest: {
+            /** @description Items of the previous plan to take over. */
+            itemIds: string[];
+        };
     };
     responses: never;
     parameters: never;
@@ -439,6 +684,21 @@ export type DishIngredient = components['schemas']['DishIngredient'];
 export type Dish = components['schemas']['Dish'];
 export type DishIngredientRequest = components['schemas']['DishIngredientRequest'];
 export type DishRequest = components['schemas']['DishRequest'];
+export type PlanSummary = components['schemas']['PlanSummary'];
+export type PlanRequest = components['schemas']['PlanRequest'];
+export type PlanDish = components['schemas']['PlanDish'];
+export type PlanDay = components['schemas']['PlanDay'];
+export type ListItemSource = components['schemas']['ListItemSource'];
+export type UserReference = components['schemas']['UserReference'];
+export type ListItem = components['schemas']['ListItem'];
+export type Plan = components['schemas']['Plan'];
+export type PlanDayRequest = components['schemas']['PlanDayRequest'];
+export type PlanDayIngredientsRequest = components['schemas']['PlanDayIngredientsRequest'];
+export type ListItemRequest = components['schemas']['ListItemRequest'];
+export type ListItemUpdateRequest = components['schemas']['ListItemUpdateRequest'];
+export type PlanRange = components['schemas']['PlanRange'];
+export type CarryOverCandidates = components['schemas']['CarryOverCandidates'];
+export type CarryOverRequest = components['schemas']['CarryOverRequest'];
 export type $defs = Record<string, never>;
 export interface operations {
     getStatus: {
@@ -1199,6 +1459,492 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['PlanSummary'][];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    createPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['PlanRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    updatePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['PlanRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deletePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    setPlanDayDish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['PlanDayRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    setPlanDayIngredients: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['PlanDayIngredientsRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    addListItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ListItemRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    updateListItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ListItemUpdateRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deleteListItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    getCarryOverCandidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['CarryOverCandidates'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    carryOverItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['CarryOverRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
             };
             404: {
                 headers: {
