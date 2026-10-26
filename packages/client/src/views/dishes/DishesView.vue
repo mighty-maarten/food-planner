@@ -1,0 +1,185 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { Button, IconField, InputIcon, InputText, ProgressSpinner } from 'primevue';
+import { useI18n } from 'vue-i18n';
+import EmptyState from '@/components/EmptyState.vue';
+import FabButton from '@/components/FabButton.vue';
+import LibraryTabs from '@/components/dishes/LibraryTabs.vue';
+import { useDishesStore } from '@/stores/dishes';
+import { buildRoute } from '@/router/utils';
+import { Icons } from '@/types/icons';
+import { TextUtil } from '@/utils/text';
+
+const { t } = useI18n();
+const router = useRouter();
+const dishesStore = useDishesStore();
+
+const query = ref('');
+
+const filteredDishes = computed(() =>
+    query.value.trim()
+        ? dishesStore.dishes.filter((dish) =>
+              TextUtil.matches(query.value, dish.name, ...dish.ingredientNames),
+          )
+        : dishesStore.dishes,
+);
+
+const isInitialLoad = computed(() => !dishesStore.isLoaded && dishesStore.isLoading('loadDishes'));
+const loadFailed = computed(() => !dishesStore.isLoaded && dishesStore.hasError('loadDishes'));
+
+onMounted(() => void dishesStore.loadDishes());
+</script>
+
+<template>
+    <main class="page">
+        <LibraryTabs />
+
+        <div v-if="isInitialLoad" class="center"><ProgressSpinner /></div>
+
+        <EmptyState
+            v-else-if="loadFailed"
+            :icon="Icons.book"
+            :title="t('common.error.title')"
+            :description="t('common.error.load')"
+        >
+            <Button :label="t('common.retry')" @click="dishesStore.loadDishes()" />
+        </EmptyState>
+
+        <EmptyState
+            v-else-if="dishesStore.dishes.length === 0"
+            :icon="Icons.book"
+            :title="t('dishes.empty.title')"
+            :description="t('dishes.empty.description')"
+        >
+            <Button
+                :icon="Icons.plus"
+                :label="t('dishes.new')"
+                @click="router.push(buildRoute('dishes_new'))"
+            />
+        </EmptyState>
+
+        <template v-else>
+            <IconField class="search">
+                <InputIcon :class="Icons.search" />
+                <InputText
+                    v-model="query"
+                    type="search"
+                    :placeholder="t('dishes.search_placeholder')"
+                    :aria-label="t('common.search')"
+                    fluid
+                />
+            </IconField>
+
+            <p class="count">{{ t('dishes.count', filteredDishes.length) }}</p>
+
+            <p v-if="filteredDishes.length === 0" class="no-results">
+                {{ t('common.no_results', { query }) }}
+            </p>
+            <ul v-else class="dish-list">
+                <li v-for="dish in filteredDishes" :key="dish.id">
+                    <RouterLink :to="buildRoute('dishes_detail', { dishId: dish.id })" class="dish">
+                        <span class="text">
+                            <span class="name">{{ dish.name }}</span>
+                            <span class="ingredients">
+                                {{
+                                    dish.ingredientNames.length
+                                        ? dish.ingredientNames.join(', ')
+                                        : t('dishes.no_ingredients')
+                                }}
+                            </span>
+                        </span>
+                        <i
+                            v-if="dish.hasRecipe"
+                            v-tooltip.left="t('dishes.has_recipe')"
+                            :class="Icons.file"
+                            class="recipe"
+                            :aria-label="t('dishes.has_recipe')"
+                        />
+                        <i :class="Icons.chevronRight" class="chevron" />
+                    </RouterLink>
+                </li>
+            </ul>
+
+            <FabButton
+                :icon="Icons.plus"
+                :label="t('dishes.new')"
+                @click="router.push(buildRoute('dishes_new'))"
+            />
+        </template>
+    </main>
+</template>
+
+<style scoped lang="scss">
+.page {
+    @include page;
+    // Room for the floating button below the last dish
+    padding-bottom: 96px;
+}
+
+.center {
+    display: grid;
+    place-items: center;
+    padding: $spacing-2xl 0;
+}
+
+.search :deep(.p-inputtext) {
+    min-height: $touch-target;
+}
+
+.count,
+.no-results {
+    margin: $spacing-sm-md 0 $spacing-sm;
+    color: $text-muted-color;
+    font-size: $font-size-sm;
+}
+
+.dish-list {
+    @include list-card;
+
+    li {
+        border-bottom: 1px solid $border-color;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
+.dish {
+    @include list-row;
+    border-bottom: none;
+    color: $text-color;
+    text-decoration: none;
+
+    &:hover {
+        background: $hover-color;
+    }
+
+    .text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .name {
+        font-weight: $font-weight-semibold;
+    }
+
+    .ingredients {
+        color: $text-muted-color;
+        font-size: $font-size-sm;
+        @include ellipsis;
+    }
+
+    .recipe {
+        color: $herb-color;
+    }
+
+    .chevron {
+        color: $text-muted-color;
+        font-size: $font-size-sm;
+    }
+}
+</style>

@@ -5,6 +5,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { ThrottlerModule } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
+import type { Provider, Type } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 import { AppController } from '../src/app.controller.js';
 import { AuthController } from '../src/auth/auth.controller.js';
@@ -37,10 +38,11 @@ export type AuthServiceMock = Record<
 
 // The HTTP pipeline as main.ts and AppModule build it (global JWT guard, validation pipe, error
 // envelope, request id, headers), with the auth endpoints and a mocked AuthService instead of
-// the database. Routes are not prefixed with the module path: /api/login instead of
-// /api/auth/login.
+// the database. Feature controllers can be added with their services mocked through `providers`.
+// Routes are not prefixed with the module path: /api/login instead of /api/auth/login.
 export async function createApp(
     authService: AuthServiceMock,
+    feature: { controllers?: Type[]; providers?: Provider[] } = {},
 ): Promise<{ app: NestExpressApplication; accessToken: string }> {
     const moduleRef = await Test.createTestingModule({
         imports: [
@@ -48,8 +50,9 @@ export async function createApp(
             JwtModule.register({ secret: config.JWT_SECRET }),
             ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
         ],
-        controllers: [AppController, AuthController],
+        controllers: [AppController, AuthController, ...(feature.controllers ?? [])],
         providers: [
+            ...(feature.providers ?? []),
             { provide: AppConfigService, useValue: new AppConfigService(config) },
             { provide: AuthService, useValue: authService },
             JwtStrategy,

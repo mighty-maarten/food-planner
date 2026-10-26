@@ -5,9 +5,22 @@
     },
     "common": {
         "offline": "Offline, wijzigingen worden later gesynchroniseerd",
+        "save": "Opslaan",
+        "cancel": "Annuleren",
+        "delete": "Verwijderen",
+        "edit": "Bewerken",
+        "add": "Toevoegen",
+        "back": "Terug",
+        "search": "Zoeken",
+        "move_up": "Omhoog",
+        "move_down": "Omlaag",
+        "retry": "Opnieuw proberen",
+        "no_results": "Niets gevonden voor “{query}”.",
         "error": {
             "title": "Er ging iets mis",
-            "description": "Probeer het opnieuw."
+            "description": "Probeer het opnieuw.",
+            "offline": "Geen verbinding. Probeer het opnieuw als je weer online bent.",
+            "load": "Laden is niet gelukt."
         }
     },
     "auth": {
@@ -41,7 +54,115 @@
     "dishes": {
         "empty": {
             "title": "Nog geen gerechten",
-            "description": "Hier beheer je binnenkort je gerechten, ingrediënten en recepten."
+            "description": "Voeg je eerste gerecht toe, met de ingrediënten die je ervoor koopt."
+        },
+        "tabs": {
+            "dishes": "Gerechten",
+            "ingredients": "Ingrediënten",
+            "categories": "Categorieën",
+            "stores": "Winkels"
+        },
+        "search_placeholder": "Zoek op gerecht of ingrediënt",
+        "new": "Nieuw gerecht",
+        "count": "{count} gerecht | {count} gerechten",
+        "no_ingredients": "Geen ingrediënten",
+        "has_recipe": "Met recept",
+        "detail": {
+            "ingredients": "Ingrediënten",
+            "recipe": "Recept",
+            "source": "Bron",
+            "servings": "{count} persoon | {count} personen",
+            "no_recipe": "Nog geen recept.",
+            "not_found": "Dit gerecht bestaat niet (meer)."
+        },
+        "form": {
+            "title_new": "Nieuw gerecht",
+            "title_edit": "Gerecht bewerken",
+            "name": "Naam",
+            "name_placeholder": "bv. Risotto met pompoen",
+            "ingredients": "Ingrediënten",
+            "ingredient_placeholder": "Ingrediënt",
+            "amount_placeholder": "Aantal",
+            "unit_placeholder": "Eenheid",
+            "add_ingredient": "Ingrediënt toevoegen",
+            "remove_ingredient": "Ingrediënt verwijderen",
+            "new_ingredient": "nieuw",
+            "duplicate_ingredient": "Staat al in de lijst",
+            "recipe": "Recept",
+            "recipe_hint": "Markdown: **vet**, lijstjes met - of 1.",
+            "source_url": "Bron (URL)",
+            "source_url_placeholder": "https://...",
+            "source_url_invalid": "Geef een volledige link, beginnend met https://",
+            "servings": "Personen",
+            "name_required": "Geef het gerecht een naam",
+            "saved": "Gerecht opgeslagen",
+            "conflict": "Er bestaat al een gerecht met deze naam.",
+            "leave_title": "Niet opgeslagen",
+            "leave_confirm": "Je wijzigingen zijn nog niet opgeslagen. Wil je ze weggooien?",
+            "leave": "Weggooien",
+            "stay": "Verder bewerken"
+        },
+        "delete": {
+            "confirm": "Wil je “{name}” verwijderen?",
+            "done": "Gerecht verwijderd"
+        }
+    },
+    "ingredients": {
+        "search_placeholder": "Zoek een ingrediënt",
+        "new": "Nieuw ingrediënt",
+        "edit": "Ingrediënt bewerken",
+        "count": "{count} ingrediënt | {count} ingrediënten",
+        "uncategorised": "Zonder categorie",
+        "used_in": "{count} gerecht | {count} gerechten",
+        "not_used": "Niet gebruikt",
+        "empty": {
+            "title": "Nog geen ingrediënten",
+            "description": "Ingrediënten worden ook toegevoegd als je ze bij een gerecht intypt."
+        },
+        "form": {
+            "name": "Naam",
+            "category": "Categorie",
+            "category_placeholder": "Kies een categorie",
+            "stores": "Meestal gekocht bij",
+            "stores_hint": "Geen winkel gekozen: het staat bij elke winkel op de lijst.",
+            "no_stores": "Nog geen winkels. Voeg ze toe onder Winkels.",
+            "conflict": "Er bestaat al een ingrediënt met deze naam."
+        },
+        "delete": {
+            "confirm": "Wil je “{name}” verwijderen?",
+            "in_use": "“{name}” wordt nog gebruikt in: {dishes}. Haal het daar eerst weg.",
+            "done": "Ingrediënt verwijderd"
+        }
+    },
+    "categories": {
+        "intro": "De volgorde hier is de standaardvolgorde. Per winkel kies je de volgorde van je route door de winkel.",
+        "new_placeholder": "Nieuwe categorie",
+        "rename": "Categorie hernoemen",
+        "name": "Naam",
+        "ingredient_count": "{count} ingrediënt | {count} ingrediënten",
+        "conflict": "Er bestaat al een categorie met deze naam.",
+        "delete": {
+            "confirm": "Wil je “{name}” verwijderen? De ingrediënten ervan komen bij “Zonder categorie”.",
+            "done": "Categorie verwijderd"
+        }
+    },
+    "stores": {
+        "intro": "Kies per winkel de volgorde van de categorieën, zoals je route door de winkel. Zo staat je lijst in de juiste volgorde.",
+        "new_placeholder": "Nieuwe winkel",
+        "empty": {
+            "title": "Nog geen winkels",
+            "description": "Voeg de winkels toe waar je boodschappen doet."
+        },
+        "ingredient_count": "{count} ingrediënt | {count} ingrediënten",
+        "name": "Naam",
+        "route": "Route door de winkel",
+        "route_hint": "Zet de categorieën in de volgorde waarin je ze tegenkomt.",
+        "not_found": "Deze winkel bestaat niet (meer).",
+        "saved": "Winkel opgeslagen",
+        "conflict": "Er bestaat al een winkel met deze naam.",
+        "delete": {
+            "confirm": "Wil je “{name}” verwijderen? Ingrediënten die je daar koopt, blijven bestaan.",
+            "done": "Winkel verwijderd"
         }
     }
 }

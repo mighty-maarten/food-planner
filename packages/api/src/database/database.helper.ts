@@ -1,5 +1,13 @@
 import { readFileSync } from 'node:fs';
-import type { DataSource } from 'typeorm';
+import { type DataSource, QueryFailedError } from 'typeorm';
+
+// PostgreSQL error codes, see https://www.postgresql.org/docs/current/errcodes-appendix.html
+const UNIQUE_VIOLATION = '23505';
+const FOREIGN_KEY_VIOLATION = '23503';
+
+const hasErrorCode = (error: unknown, code: string): boolean =>
+    error instanceof QueryFailedError &&
+    (error.driverError as { code?: unknown } | undefined)?.code === code;
 
 export const DatabaseHelper = {
     async processSqlFile(fileName: string, dataSource: DataSource): Promise<void> {
@@ -18,6 +26,14 @@ export const DatabaseHelper = {
             );
         }
         await dataSource.query(fileContent);
+    },
+
+    isUniqueViolation(error: unknown): boolean {
+        return hasErrorCode(error, UNIQUE_VIOLATION);
+    },
+
+    isForeignKeyViolation(error: unknown): boolean {
+        return hasErrorCode(error, FOREIGN_KEY_VIOLATION);
     },
 
     quoteIdentifier(identifier: string): string {

@@ -5,4 +5,4 @@ node_modules
 
 # Production environment and runtime data (server only)
 .env.production
-data/
+/data/

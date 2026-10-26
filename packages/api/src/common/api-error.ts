@@ -33,6 +33,15 @@ export class ApiException extends HttpException {
         super(message, status);
     }
 
+    static invalidRequest(message: string, details?: Record<string, unknown>): ApiException {
+        return new ApiException(
+            HttpStatus.BAD_REQUEST,
+            ApiErrorCode.INVALID_REQUEST,
+            message,
+            details,
+        );
+    }
+
     static notFound(message: string): ApiException {
         return new ApiException(HttpStatus.NOT_FOUND, ApiErrorCode.NOT_FOUND, message);
     }
