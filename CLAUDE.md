@@ -1,6 +1,7 @@
 # Food Planner
 
 Vue 3 PWA (`packages/client/`) + NestJS API (`packages/api/`), npm workspaces. See README.md.
+Scope, design decisions and milestones: `docs/plan.md` (keep it up to date when a milestone is done).
 
 ## Commands
 
