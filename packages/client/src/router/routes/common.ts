@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { dishesRoutes } from './dishes';
+import { planRoutes } from './plan';
 
 const routesCommon = {
     PLAN: 'common_plan',
@@ -18,9 +19,16 @@ export const commonRoutes = [
     },
     {
         path: '/weekmenu',
-        name: routesCommon.PLAN,
-        component: () => import('@/views/PlanView.vue'),
-        meta: { title: 'nav.plan' },
+        children: [
+            {
+                // The current plan
+                path: '',
+                name: routesCommon.PLAN,
+                component: () => import('@/views/plan/PlanView.vue'),
+                meta: { title: 'nav.plan' },
+            },
+            ...planRoutes,
+        ],
     },
     {
         path: '/winkelen',

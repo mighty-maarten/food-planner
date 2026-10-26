@@ -4,6 +4,7 @@ import { authRouteTree } from './auth/route-tree.js';
 import { categoriesRouteTree } from './categories/route-tree.js';
 import { dishesRouteTree } from './dishes/route-tree.js';
 import { ingredientsRouteTree } from './ingredients/route-tree.js';
+import { plansRouteTree } from './plans/route-tree.js';
 import { storesRouteTree } from './stores/route-tree.js';
 import { usersRouteTree } from './users/route-tree.js';
 
@@ -17,6 +18,7 @@ export const routes: Routes = [
             storesRouteTree,
             ingredientsRouteTree,
             dishesRouteTree,
+            plansRouteTree,
         ],
     },
 ];

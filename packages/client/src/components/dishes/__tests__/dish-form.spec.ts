@@ -65,6 +65,18 @@ describe('dish form', () => {
         expect(state.sourceUrl).toBe('');
     });
 
+    it('offers an empty line for a dish without ingredients', () => {
+        const state = toFormState({
+            id: 'dish-1',
+            name: 'Pasta pesto',
+            recipe: null,
+            sourceUrl: null,
+            servings: null,
+            ingredients: [],
+        });
+        expect(state.lines).toHaveLength(1);
+    });
+
     it('marks later lines with the same ingredient as duplicates', () => {
         const duplicates = duplicateLineKeys([
             line(1, 'Ui'),

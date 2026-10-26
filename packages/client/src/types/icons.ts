@@ -16,6 +16,8 @@ export const Icons = {
     arrowUp: 'pi pi-arrow-up',
     arrowDown: 'pi pi-arrow-down',
     chevronRight: 'pi pi-chevron-right',
+    chevronLeft: 'pi pi-chevron-left',
+    ellipsis: 'pi pi-ellipsis-v',
     link: 'pi pi-external-link',
     users: 'pi pi-users',
     shop: 'pi pi-shop',

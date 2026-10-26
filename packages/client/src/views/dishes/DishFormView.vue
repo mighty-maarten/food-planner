@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
-import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import {
     AutoComplete,
     Button,
@@ -33,6 +33,7 @@ import { TextUtil } from '@/utils/text';
 const props = defineProps<{ dishId?: string }>();
 
 const { t } = useI18n();
+const route = useRoute();
 const router = useRouter();
 const confirm = useConfirm();
 const { apiErrorToast, successToast } = useToastMessages();
@@ -71,10 +72,20 @@ const nameError = computed(() => submitted.value && !form.value?.name.trim());
 const urlError = computed(
     () => !!form.value?.sourceUrl.trim() && submitted.value && !isValidUrl(form.value.sourceUrl),
 );
-const backRoute = computed(() =>
-    props.dishId
-        ? buildRoute('dishes_detail', { dishId: props.dishId })
-        : buildRoute('common_dishes'),
+// Opened from somewhere else (e.g. a plan day): go back there after saving or cancelling.
+// Only paths within the app are accepted.
+const returnTo = computed(() => {
+    const value = route.query.terug;
+    return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
+        ? value
+        : undefined;
+});
+const backRoute = computed(
+    () =>
+        returnTo.value ??
+        (props.dishId
+            ? buildRoute('dishes_detail', { dishId: props.dishId })
+            : buildRoute('common_dishes')),
 );
 
 function setForm(state: DishFormState) {
@@ -146,7 +157,7 @@ async function save() {
     }
     setForm(toFormState(dish));
     successToast(t('dishes.form.saved'), dish.name);
-    await router.replace(buildRoute('dishes_detail', { dishId: dish.id }));
+    await router.replace(returnTo.value ?? buildRoute('dishes_detail', { dishId: dish.id }));
 }
 
 onBeforeRouteLeave(() => {
