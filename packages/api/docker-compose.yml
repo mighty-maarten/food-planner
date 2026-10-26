@@ -1,0 +1,17 @@
+# Local development database
+name: food-planner
+services:
+    db:
+        image: postgres:18
+        restart: always
+        environment:
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: admin
+            POSTGRES_DB: food_planner_db
+        ports:
+            - '5434:5432'
+        volumes:
+            - db-data:/var/lib/postgresql
+
+volumes:
+    db-data:

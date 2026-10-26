@@ -1,0 +1,52 @@
+{
+    "name": "food-planner",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Weekmenu's en boodschappenlijsten plannen",
+    "type": "module",
+    "workspaces": [
+        "packages/api",
+        "packages/client"
+    ],
+    "scripts": {
+        "dev:api": "npm run start:local --workspace=packages/api",
+        "dev:client": "npm run dev --workspace=packages/client",
+        "build": "npm run build --workspace=packages/client && npm run build --workspace=packages/api",
+        "format": "npm run format --workspaces",
+        "format:check": "npm run format:check --workspaces",
+        "lint": "npm run lint --workspaces",
+        "typecheck": "npm run typecheck --workspaces",
+        "test": "npm test --workspace=packages/api && npm run test:e2e --workspace=packages/api && npm run test:unit --workspace=packages/client -- --run",
+        "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+        "api:types": "npm run build --workspace=packages/api && node packages/api/dist/openapi/generate.js packages/api/dist/openapi.json && openapi-typescript packages/api/dist/openapi.json --root-types --root-types-no-schema-prefix -o packages/client/src/api/generated/schema.ts && prettier --write packages/client/src/api/generated/schema.ts --config packages/client/.prettierrc.json"
+    },
+    "engines": {
+        "node": ">=26 <27"
+    },
+    "volta": {
+        "node": "26.12.1"
+    },
+    "allowScripts": {
+        "bcrypt@6.0.0": true,
+        "fsevents@2.3.3": true,
+        "@parcel/watcher": false,
+        "@scarf/scarf": false
+    },
+    "overrides": {
+        "multer": "^2.5.0",
+        "typescript-eslint": "8.72.0",
+        "@typescript-eslint/typescript-estree": "8.72.0",
+        "@typescript-eslint/parser": "8.72.0",
+        "@typescript-eslint/eslint-plugin": "8.72.0",
+        "@typescript-eslint/utils": "8.72.0",
+        "@typescript-eslint/type-utils": "8.72.0",
+        "@typescript-eslint/types": "8.72.0",
+        "@typescript-eslint/scope-manager": "8.72.0",
+        "@typescript-eslint/visitor-keys": "8.72.0",
+        "@typescript-eslint/project-service": "8.72.0",
+        "@typescript-eslint/tsconfig-utils": "8.72.0",
+        "openapi-typescript": {
+            "typescript": "~6.0.3"
+        }
+    }
+}

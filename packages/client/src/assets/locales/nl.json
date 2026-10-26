@@ -1,0 +1,47 @@
+{
+    "app": {
+        "name": "Food Planner",
+        "tagline": "Weekmenu en boodschappen, zonder gedoe."
+    },
+    "common": {
+        "offline": "Offline, wijzigingen worden later gesynchroniseerd",
+        "error": {
+            "title": "Er ging iets mis",
+            "description": "Probeer het opnieuw."
+        }
+    },
+    "auth": {
+        "login": {
+            "title": "Inloggen",
+            "email_placeholder": "E-mailadres",
+            "password_placeholder": "Wachtwoord",
+            "submit": "Inloggen",
+            "error": "Inloggen mislukt. Controleer je gegevens en probeer opnieuw."
+        },
+        "account": "Account",
+        "logout": "Uitloggen"
+    },
+    "nav": {
+        "plan": "Weekmenu",
+        "shop": "Winkelen",
+        "dishes": "Gerechten"
+    },
+    "plan": {
+        "empty": {
+            "title": "Nog geen weekmenu",
+            "description": "Hier plan je binnenkort je gerechten per dag en stel je je boodschappenlijst samen."
+        }
+    },
+    "shop": {
+        "empty": {
+            "title": "Niets te winkelen",
+            "description": "Hier vink je straks in de winkel je boodschappen af."
+        }
+    },
+    "dishes": {
+        "empty": {
+            "title": "Nog geen gerechten",
+            "description": "Hier beheer je binnenkort je gerechten, ingrediënten en recepten."
+        }
+    }
+}

@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/.env*
+**/.eslintcache
+**/coverage
+.git
+.idea
+data

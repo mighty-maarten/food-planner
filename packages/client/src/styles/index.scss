@@ -1,0 +1,72 @@
+/**
+ ************ NOTE ************
+ * We use PrimeVue with a customized theme. Colors are defined in primevue-preset.ts and exposed
+ * as CSS variables (--p-*). The color scheme follows the system setting (light/dark).
+*/
+@use 'primeicons/primeicons.css';
+
+:root {
+    --app-background: var(--p-surface-50);
+    --app-herb: #5e7a3a;
+    --app-saffron: #b9751a;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --app-background: var(--p-surface-950);
+        --app-herb: #9cbf6e;
+        --app-saffron: #f0b860;
+        color-scheme: dark;
+    }
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    font-family: $font-family-standard;
+    font-weight: $font-weight-normal;
+    color: $text-color;
+    height: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    background: $background-color;
+}
+
+#app {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+ul {
+    margin: 0;
+}
+
+h1,
+h2,
+h3 {
+    font-family: $font-family-heading;
+    font-weight: $font-weight-semibold;
+    letter-spacing: -0.01em;
+}
+
+// Make PrimeVue ConfirmDialog respect newlines
+.p-confirmdialog-message {
+    white-space: pre-line;
+}

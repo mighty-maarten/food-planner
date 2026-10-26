@@ -1,0 +1,71 @@
+// Fonts
+$font-family-standard:
+    'Figtree Variable',
+    system-ui,
+    -apple-system,
+    sans-serif;
+$font-family-heading: 'Fraunces Variable', Georgia, serif;
+
+// Colors (backed by the PrimeVue theme tokens and the scheme-aware --app-* variables in index.scss)
+$primary-color: var(--p-primary-color);
+$primary-contrast-color: var(--p-primary-contrast-color);
+$background-color: var(--app-background);
+$card-color: var(--p-content-background);
+$border-color: var(--p-content-border-color);
+$hover-color: var(--p-content-hover-background);
+$text-color: var(--p-text-color);
+$text-muted-color: var(--p-text-muted-color);
+$herb-color: var(--app-herb);
+$saffron-color: var(--app-saffron);
+
+// Font sizes
+$font-size-xxs: 11px;
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-base: 16px;
+$font-size-md: 18px;
+$font-size-lg: 20px;
+$font-size-xl: 24px;
+$font-size-2xl: 30px;
+
+// Font weights
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Spacings
+$spacing-xxs: 2px;
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-sm-md: 12px;
+$spacing-md: 16px;
+$spacing-md-lg: 20px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xlm: 48px;
+$spacing-2xl: 64px;
+
+// Border radius
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+$radius-2xl: 16px;
+$radius-full: calc(infinity * 1px);
+
+// Shadows
+$shadow-xs: 0px 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.1);
+
+// Layout
+$sidebar-width: 232px;
+$bottom-nav-height: 64px;
+// Minimum touch target, generous for one-handed use in the store
+$touch-target: 48px;
+
+// Breakpoints
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;

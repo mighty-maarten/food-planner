@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+.idea
+.vscode/*
+
+# Production environment and runtime data (server only)
+.env.production
+data/
