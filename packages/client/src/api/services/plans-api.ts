@@ -1,6 +1,8 @@
 import { HttpClient } from '@/api/http-client';
 import type {
     CarryOverCandidates,
+    ListItem,
+    ListItemCheckRequest,
     ListItemRequest,
     ListItemUpdateRequest,
     Plan,
@@ -58,6 +60,15 @@ export class PlansApi {
 
     public static async deleteItem(planId: string, itemId: string): Promise<Plan> {
         return HttpClient.delete<Plan>(`${ApiUrls.items(planId)}/${itemId}`);
+    }
+
+    /** Shop mode: the last tick wins (by `at`), the response is the item's current state */
+    public static async setItemChecked(
+        planId: string,
+        itemId: string,
+        request: ListItemCheckRequest,
+    ): Promise<ListItem> {
+        return HttpClient.put<ListItem>(`${ApiUrls.items(planId)}/${itemId}/checked`, request);
     }
 
     public static async getCarryOverCandidates(planId: string): Promise<CarryOverCandidates> {

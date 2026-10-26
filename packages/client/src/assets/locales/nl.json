@@ -132,8 +132,34 @@
     "shop": {
         "empty": {
             "title": "Niets te winkelen",
-            "description": "Hier vink je straks in de winkel je boodschappen af."
-        }
+            "description": "De boodschappenlijst van dit weekmenu is leeg."
+        },
+        "no_plan": {
+            "title": "Nog geen weekmenu",
+            "description": "Maak eerst een weekmenu en stel er je boodschappenlijst mee samen.",
+            "action": "Naar het weekmenu"
+        },
+        "offline_no_cache": {
+            "title": "Geen verbinding",
+            "description": "De lijst is nog niet op dit toestel bewaard. Open Winkelen één keer met verbinding, daarna werkt het ook offline."
+        },
+        "all_stores": "Alle winkels",
+        "progress": "{done} van {total} in je kar",
+        "done": {
+            "title": "Alles in je kar!",
+            "description": "Er staat niets meer op de lijst voor deze winkel."
+        },
+        "in_cart": "In je kar ({count})",
+        "by": "door {name}",
+        "uncategorised": "Overige",
+        "status": {
+            "live": "Live",
+            "offline": "Offline",
+            "pending": "{count} wacht op verbinding | {count} wachten op verbinding",
+            "saved_at": "Bewaard om {time}"
+        },
+        "pending_item": "Nog niet gesynchroniseerd",
+        "needed_by": "{date}"
     },
     "dishes": {
         "empty": {

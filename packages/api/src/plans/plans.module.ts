@@ -6,6 +6,7 @@ import { PlanDayEntity } from '../database/entities/plan-day.entity.js';
 import { PlanEntity } from '../database/entities/plan.entity.js';
 import { IngredientsModule } from '../ingredients/ingredients.module.js';
 import { PlansController } from './plans.controller.js';
+import { PlanEventsService } from './plan-events.service.js';
 import { PlansService } from './plans.service.js';
 
 @Module({
@@ -14,6 +15,6 @@ import { PlansService } from './plans.service.js';
         IngredientsModule,
     ],
     controllers: [PlansController],
-    providers: [PlansService],
+    providers: [PlansService, PlanEventsService],
 })
 export class PlansModule {}

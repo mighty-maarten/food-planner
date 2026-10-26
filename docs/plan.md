@@ -84,6 +84,21 @@ home.
 - Works offline: the active list is cached on the device and ticks made offline are synced when the
   connection is back. Two people can shop at the same time (e.g. in two stores): ticks show up live
   for the other (SSE). Conflicting changes: the last tick wins.
+- Decided while building milestone 4:
+  - "The last tick wins" by the time of the tick on the device (`check_changed_at`), not by when
+    it reaches the server, so a tick made offline doesn't overwrite a later one. Times in the
+    future count as now (a phone clock running ahead can't win every later tick).
+  - Shop mode shows the current plan. Its list, categories and stores are cached in IndexedDB;
+    ticks are applied at once, queued (only the last tick per item) and sent in order when online,
+    in the foreground, or when the live connection is back. A rejected tick (e.g. the item was
+    removed) is dropped. Logging out clears the cache and the queue.
+  - Live updates: `GET /plans/:id/events` (SSE, a ping every 25 s, in memory in the single API
+    process). Read with fetch so the access token stays in the Authorization header. Ticks arrive
+    as the item's new state, other changes (build mode) make shop mode reload the plan. An
+    incoming tick doesn't overwrite an unsent tick of this device.
+  - Ticked items move to an "In je kar" section at the bottom, most recent first; the shopper's
+    own ticks don't say who, the other's do. Items needed today, tomorrow or earlier are
+    highlighted. The chosen store is remembered on the device.
 
 ### Hosting
 
@@ -132,8 +147,8 @@ Wo: Pitta met bloemkool/courgette
    "Gerechten".
 3. **Build mode** (done): plans with days and dishes, shopping list generation from the planned
    dishes (pick ingredients, merge, needed-by date), free items, carry over from the previous plan.
-4. **Shop mode**: store filter, grouping by category in store order, ticking, offline cache and
-   sync queue (IndexedDB), live updates over SSE.
+4. **Shop mode** (done): store filter, grouping by category in store order, ticking, offline cache
+   and sync queue (IndexedDB), live updates over SSE.
 5. **Import**: parse the notes export, cluster duplicates, review file, seed script.
 6. **Infrastructure and deploy**: Dockerfile and Compose for the app, proxy LXC, img-manager
    refactor, Food Planner LXC, deployment runbook (`DEPLOYMENT.md`), backups.

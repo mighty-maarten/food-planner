@@ -33,7 +33,7 @@ export const commonRoutes = [
     {
         path: '/winkelen',
         name: routesCommon.SHOP,
-        component: () => import('@/views/ShopView.vue'),
+        component: () => import('@/views/shop/ShopView.vue'),
         meta: { title: 'nav.shop' },
     },
     {

@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
     ArrayMaxSize,
+    IsBoolean,
+    IsISO8601,
     ArrayUnique,
     IsArray,
     IsNotEmpty,
@@ -208,4 +210,41 @@ export class CarryOverRequest {
     @ArrayMaxSize(500)
     @IsUUID('all', { each: true })
     public itemIds!: string[];
+}
+
+export class ListItemCheckRequest {
+    @ApiProperty()
+    @IsBoolean()
+    public checked!: boolean;
+
+    @ApiProperty({
+        description:
+            'ISO timestamp of the tick on the device. Only applied when newer than the last ' +
+            'change of the item (the last tick wins); future times count as now.',
+    })
+    @IsISO8601({ strict: true, strictSeparator: true })
+    public at!: string;
+}
+
+export const PlanEventKind = {
+    /** The checked state of an item changed, `item` has its new state */
+    ITEM_CHECKED: 'item-checked',
+    /** Anything else changed (dishes, list items): reload the plan */
+    PLAN_CHANGED: 'plan-changed',
+    /** Keeps the connection open through proxies */
+    PING: 'ping',
+} as const;
+
+export type PlanEventKind = (typeof PlanEventKind)[keyof typeof PlanEventKind];
+
+/** A message of the live updates of a plan (the `data` of a server-sent event, as JSON) */
+export class PlanEvent {
+    @ApiProperty({ enum: Object.values(PlanEventKind), enumName: 'PlanEventKind' })
+    public kind!: PlanEventKind;
+
+    @ApiProperty({ type: ListItem, required: false })
+    public item?: ListItem;
+
+    @ApiProperty({ type: String, nullable: true, required: false, description: 'Who changed it.' })
+    public byUserId?: string | null;
 }
