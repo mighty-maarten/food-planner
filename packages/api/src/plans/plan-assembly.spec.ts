@@ -5,7 +5,9 @@ const item = (overrides: Partial<ListItemRow>): ListItemRow => ({
     ingredientId: 'ingredient',
     name: 'Ingredient',
     categoryId: null,
-    storeIds: [],
+    defaultStoreIds: [],
+    storeOverride: false,
+    storeId: null,
     note: null,
     neededBy: null,
     manual: false,
@@ -94,6 +96,26 @@ describe('assemblePlan', () => {
         });
 
         expect(result.items[0]?.neededBy).toBeNull();
+    });
+
+    it.each([
+        ['the default stores without an override', false, null, ['lidl', 'aldi']],
+        ['the chosen store', true, 'carrefour', ['carrefour']],
+        ['any store', true, null, []],
+    ])('is bought at %s', (_case, storeOverride, storeId, storeIds) => {
+        const result = assemblePlan({
+            plan,
+            days: [],
+            dishIngredients: [],
+            items: [item({ defaultStoreIds: ['lidl', 'aldi'], storeOverride, storeId })],
+            sources: [],
+        });
+
+        expect(result.items[0]).toMatchObject({
+            storeIds,
+            defaultStoreIds: ['lidl', 'aldi'],
+            storeOverride,
+        });
     });
 
     it('marks the ingredients on the list per day', () => {

@@ -7,12 +7,14 @@ import type { Dish, DishListItem, DishRequest } from '@/api/services/types/libra
 import { ArrayUtil } from '@/utils/array';
 import { TextUtil } from '@/utils/text';
 
-function toListItem(dish: Dish): DishListItem {
+/** `timesPlanned` is not part of a dish's details, it is kept from the list */
+function toListItem(dish: Dish, timesPlanned: number): DishListItem {
     return {
         id: dish.id,
         name: dish.name,
         ingredientNames: dish.ingredients.map((line) => line.name),
         hasRecipe: !!dish.recipe || !!dish.sourceUrl,
+        timesPlanned,
     };
 }
 
@@ -27,7 +29,8 @@ export const useDishesStore = defineStore('dishes', () => {
     const details = ref(new Map<string, Dish>());
 
     function upsertListItem(dish: Dish): void {
-        const item = toListItem(dish);
+        const current = dishes.value.find((d) => d.id === dish.id);
+        const item = toListItem(dish, current?.timesPlanned ?? 0);
         if (dishes.value.some((d) => d.id === dish.id)) {
             ArrayUtil.replaceByMut(dishes.value, (d) => d.id === dish.id, item);
         } else {

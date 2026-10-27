@@ -21,12 +21,15 @@ const dishesStore = useDishesStore();
 
 const query = ref('');
 
+// Favourites first (planned most, also before the app); search results by name
 const matches = computed(() =>
     query.value.trim()
         ? dishesStore.dishes.filter((dish) =>
               TextUtil.matches(query.value, dish.name, ...dish.ingredientNames),
           )
-        : dishesStore.dishes,
+        : [...dishesStore.dishes].sort(
+              (a, b) => b.timesPlanned - a.timesPlanned || TextUtil.compare(a.name, b.name),
+          ),
 );
 const canCreate = computed(() => {
     const name = query.value.trim().toLowerCase();
@@ -115,6 +118,13 @@ async function create() {
                             {{ dish.ingredientNames.join(', ') }}
                         </span>
                     </span>
+                    <span
+                        v-if="dish.timesPlanned > 0"
+                        v-tooltip.left="t('plan.picker.times_planned', dish.timesPlanned)"
+                        class="count"
+                    >
+                        {{ dish.timesPlanned }}×
+                    </span>
                     <i v-if="dish.id === currentDishId" :class="Icons.check" />
                 </button>
             </li>
@@ -184,6 +194,13 @@ async function create() {
         color: $text-muted-color;
         font-size: $font-size-sm;
         @include ellipsis;
+    }
+
+    .count {
+        flex-shrink: 0;
+        color: $text-muted-color;
+        font-size: $font-size-sm;
+        font-variant-numeric: tabular-nums;
     }
 }
 

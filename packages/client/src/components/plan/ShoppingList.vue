@@ -13,6 +13,7 @@ import { usePlansStore } from '@/stores/plans';
 import { Icons } from '@/types/icons';
 import { DateUtil } from '@/utils/date';
 import { describeSources, groupItemsByCategory } from '@/utils/list';
+import { storeNames } from '@/utils/shop';
 import { TextUtil } from '@/utils/text';
 
 const props = defineProps<{ plan: Plan }>();
@@ -42,6 +43,10 @@ function details(item: ListItem): string {
             ? t('plan.list.needed_by', { date: DateUtil.formatShort(item.neededBy) })
             : null,
         item.sources.length ? describeSources(item) : t('plan.list.extra'),
+        // A store chosen for this list, deviating from the default
+        item.storeOverride
+            ? (storeNames(item.storeIds, catalogueStore.stores) ?? t('plan.item.store_any'))
+            : null,
     ];
     return parts.filter(Boolean).join(' · ');
 }

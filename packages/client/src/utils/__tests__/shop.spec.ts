@@ -8,6 +8,8 @@ const item = (name: string, overrides: Partial<ListItem> = {}): ListItem => ({
     name,
     categoryId: null,
     storeIds: [],
+    defaultStoreIds: [],
+    storeOverride: false,
     note: null,
     neededBy: null,
     neededByOverride: false,

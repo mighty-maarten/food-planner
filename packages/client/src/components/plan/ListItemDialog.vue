@@ -5,10 +5,12 @@ import { useI18n } from 'vue-i18n';
 import type { ListItem, Plan } from '@/api/services/types/plans';
 import { useSheetDialog } from '@/composables/sheet-dialog';
 import { useToastMessages } from '@/composables/toast';
+import { useCatalogueStore } from '@/stores/catalogue';
 import { usePlansStore } from '@/stores/plans';
 import { Icons } from '@/types/icons';
 import { DateUtil } from '@/utils/date';
 import { describeSources } from '@/utils/list';
+import { storeNames } from '@/utils/shop';
 
 const props = defineProps<{ plan: Plan; item: ListItem | null }>();
 const visible = defineModel<boolean>('visible', { required: true });
@@ -17,6 +19,29 @@ const { t } = useI18n();
 const dialogProps = useSheetDialog();
 const { apiErrorToast, successToast } = useToastMessages();
 const plansStore = usePlansStore();
+const catalogueStore = useCatalogueStore();
+
+// Where it is bought on this list: the default stores, a store, or any store
+const DEFAULT_STORE = 'default';
+const ANY_STORE = 'any';
+const store = ref(DEFAULT_STORE);
+const storeOptions = computed(() => [
+    {
+        value: DEFAULT_STORE,
+        label: t('plan.item.store_default', {
+            stores:
+                storeNames(props.item?.defaultStoreIds ?? [], catalogueStore.stores) ??
+                t('plan.item.store_any').toLowerCase(),
+        }),
+    },
+    ...catalogueStore.stores.map((s) => ({ value: s.id, label: s.name })),
+    { value: ANY_STORE, label: t('plan.item.store_any') },
+]);
+
+function currentStore(item: ListItem): string {
+    if (!item.storeOverride) return DEFAULT_STORE;
+    return item.storeIds[0] ?? ANY_STORE;
+}
 
 const note = ref('');
 // The Select treats an empty string as "nothing selected", so automatic gets its own value
@@ -44,14 +69,23 @@ watch(visible, (open) => {
     note.value = props.item.note ?? '';
     neededBy.value =
         props.item.neededByOverride && props.item.neededBy ? props.item.neededBy : AUTOMATIC;
+    store.value = currentStore(props.item);
 });
 
 async function save() {
     if (!props.item) return;
-    const saved = await plansStore.updateItem(props.plan.id, props.item.id, {
+    let saved = await plansStore.updateItem(props.plan.id, props.item.id, {
         note: note.value.trim() || null,
         neededBy: neededBy.value === AUTOMATIC ? null : neededBy.value,
     });
+    if (saved && store.value !== currentStore(props.item)) {
+        saved = await plansStore.setItemStore(
+            props.plan.id,
+            props.item.id,
+            store.value !== DEFAULT_STORE,
+            [DEFAULT_STORE, ANY_STORE].includes(store.value) ? null : store.value,
+        );
+    }
     if (saved) {
         visible.value = false;
     } else {
@@ -89,6 +123,17 @@ async function remove() {
                     v-model="note"
                     :placeholder="t('plan.item.note_placeholder')"
                     maxlength="200"
+                    fluid
+                />
+            </div>
+            <div v-if="catalogueStore.stores.length" class="field">
+                <label for="item-store">{{ t('plan.item.store') }}</label>
+                <Select
+                    v-model="store"
+                    input-id="item-store"
+                    :options="storeOptions"
+                    option-label="label"
+                    option-value="value"
                     fluid
                 />
             </div>

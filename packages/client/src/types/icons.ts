@@ -18,6 +18,8 @@ export const Icons = {
     chevronRight: 'pi pi-chevron-right',
     chevronLeft: 'pi pi-chevron-left',
     ellipsis: 'pi pi-ellipsis-v',
+    filter: 'pi pi-filter',
+    filterFill: 'pi pi-filter-fill',
     link: 'pi pi-external-link',
     users: 'pi pi-users',
     shop: 'pi pi-shop',

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Button, ProgressSpinner } from 'primevue';
+import { Button, Menu, ProgressSpinner } from 'primevue';
+import type { MenuItem } from 'primevue/menuitem';
 import { useEventListener } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
@@ -11,7 +12,8 @@ import { useShopStore } from '@/stores/shop';
 import { buildRoute } from '@/router/utils';
 import { Icons } from '@/types/icons';
 import { DateUtil } from '@/utils/date';
-import { buildShopList, isForStore, isNeededSoon } from '@/utils/shop';
+import { buildShopList, isForStore, isNeededSoon, storeNames } from '@/utils/shop';
+import { useToastMessages } from '@/composables/toast';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -33,6 +35,91 @@ const savedTime = computed(() =>
         ? new Date(shop.savedAt).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
         : '',
 );
+
+const { infoToast } = useToastMessages();
+
+const storeMenu = ref<InstanceType<typeof Menu>>();
+const itemMenu = ref<InstanceType<typeof Menu>>();
+const menuItem = ref<ListItem | null>(null);
+
+/** Where the item is bought, when it was chosen for this list (deviates from the default) */
+function storeTag(item: ListItem): string | null {
+    if (!item.storeOverride) return null;
+    return storeNames(item.storeIds, shop.stores) ?? t('shop.item_store.any');
+}
+
+const itemMenuItems = computed<MenuItem[]>(() => {
+    const item = menuItem.value;
+    if (!item) return [];
+    const choose = (override: boolean, storeId: string | null) => () => {
+        void moveItem(item, override, storeId);
+    };
+    const isAny = item.storeOverride && item.storeIds.length === 0;
+    return [
+        {
+            label: t('shop.item_store.title', { name: item.name }),
+            items: [
+                {
+                    label: t('shop.item_store.default', {
+                        stores:
+                            storeNames(item.defaultStoreIds, shop.stores) ??
+                            t('shop.item_store.any').toLowerCase(),
+                    }),
+                    icon: item.storeOverride ? undefined : Icons.check,
+                    command: choose(false, null),
+                },
+                ...shop.stores.map((store) => ({
+                    label: store.name,
+                    icon:
+                        item.storeOverride && item.storeIds[0] === store.id
+                            ? Icons.check
+                            : undefined,
+                    command: choose(true, store.id),
+                })),
+                {
+                    label: t('shop.item_store.any'),
+                    icon: isAny ? Icons.check : undefined,
+                    command: choose(true, null),
+                },
+            ],
+        },
+    ];
+});
+
+function openItemMenu(event: Event, item: ListItem) {
+    menuItem.value = item;
+    itemMenu.value?.toggle(event);
+}
+
+async function moveItem(item: ListItem, override: boolean, storeId: string | null) {
+    await shop.setItemStore(item, override, storeId);
+    // Moved out of the store being shopped: say where it went, it leaves the list
+    const moved = shop.plan?.items.find((i) => i.id === item.id);
+    if (moved && !isForStore(moved, shop.storeId)) {
+        infoToast(
+            t('shop.item_store.moved', {
+                name: item.name,
+                store: storeNames(moved.storeIds, shop.stores) ?? t('shop.item_store.any'),
+            }),
+            '',
+        );
+    }
+}
+const storeLabel = computed(
+    () => shop.stores.find((store) => store.id === shop.storeId)?.name ?? t('shop.all_stores'),
+);
+const storeMenuItems = computed<MenuItem[]>(() => [
+    {
+        label: t('shop.choose_store'),
+        items: [{ id: null, name: t('shop.all_stores') }, ...shop.stores].map((store) => ({
+            label: store.name,
+            icon: store.id === shop.storeId ? Icons.check : undefined,
+            command: () => {
+                shop.setStoreFilter(store.id);
+            },
+        })),
+    },
+]);
 
 function tick(item: ListItem) {
     // A short buzz confirms the tick without looking (Android; iOS Safari has no vibrate)
@@ -76,50 +163,62 @@ useEventListener(document, 'visibilitychange', () => {
         </EmptyState>
 
         <template v-else-if="list">
-            <header class="shop-header">
-                <span class="range">
-                    {{ DateUtil.formatRange(shop.plan.startDate, shop.plan.endDate) }}
+            <!-- One slim bar: the list starts right below it -->
+            <div class="toolbar">
+                <span v-if="total" class="count" :aria-label="t('shop.progress', { done, total })">
+                    {{ t('shop.progress_short', { done, total }) }}
                 </span>
-                <span v-if="shop.isOffline || shop.queue.length" class="status offline">
-                    <i :class="Icons.wifiOff" />
-                    {{
+                <!-- The store filter lives behind the filter button, but stays visible when on -->
+                <span v-if="shop.storeId" class="active-store">
+                    <i :class="Icons.shop" />{{ storeLabel }}
+                </span>
+                <span class="spacer" />
+                <Menu ref="storeMenu" :model="storeMenuItems" popup />
+                <Menu ref="itemMenu" :model="itemMenuItems" popup class="item-menu" />
+                <span
+                    v-if="shop.queue.length || shop.isOffline"
+                    v-tooltip.bottom="t('shop.status.offline_hint', { time: savedTime })"
+                    class="status offline"
+                    :aria-label="
                         shop.queue.length
                             ? t('shop.status.pending', shop.queue.length)
                             : t('shop.status.offline')
-                    }}
+                    "
+                >
+                    <i :class="shop.queue.length ? Icons.refresh : Icons.wifiOff" />
+                    <template v-if="shop.queue.length">{{ shop.queue.length }}</template>
                 </span>
-                <span v-else-if="shop.isLive" class="status live">
+                <span
+                    v-else-if="shop.isLive"
+                    v-tooltip.bottom="t('shop.status.live_hint')"
+                    class="status live"
+                    :aria-label="t('shop.status.live')"
+                >
                     <span class="dot" />
-                    {{ t('shop.status.live') }}
                 </span>
-            </header>
-            <p v-if="shop.isOffline && savedTime" class="saved-at">
-                {{ t('shop.status.saved_at', { time: savedTime }) }}
-            </p>
-
-            <nav v-if="shop.stores.length" class="stores">
                 <button
+                    v-if="shop.stores.length"
+                    v-tooltip.left="t('shop.filter')"
                     type="button"
-                    class="store"
-                    :class="{ active: !shop.storeId }"
-                    :aria-pressed="!shop.storeId"
-                    @click="shop.setStoreFilter(null)"
+                    class="filter"
+                    :class="{ active: shop.storeId }"
+                    :aria-label="t('shop.filter')"
+                    aria-haspopup="true"
+                    @click="storeMenu?.toggle($event)"
                 >
-                    {{ t('shop.all_stores') }}
+                    <!-- Filled while a store filter is on -->
+                    <i :class="shop.storeId ? Icons.filterFill : Icons.filter" />
                 </button>
-                <button
-                    v-for="store in shop.stores"
-                    :key="store.id"
-                    type="button"
-                    class="store"
-                    :class="{ active: shop.storeId === store.id }"
-                    :aria-pressed="shop.storeId === store.id"
-                    @click="shop.setStoreFilter(store.id)"
+                <div
+                    v-if="total"
+                    class="bar"
+                    role="progressbar"
+                    :aria-valuenow="done"
+                    :aria-valuemax="total"
                 >
-                    <i :class="Icons.shop" />
-                    {{ store.name }}
-                </button>
-            </nav>
+                    <div class="fill" :style="{ width: `${(done / total) * 100}%` }" />
+                </div>
+            </div>
 
             <EmptyState
                 v-if="total === 0"
@@ -129,18 +228,6 @@ useEventListener(document, 'visibilitychange', () => {
             />
 
             <template v-else>
-                <div class="progress">
-                    <span>{{ t('shop.progress', { done, total }) }}</span>
-                    <div
-                        class="bar"
-                        role="progressbar"
-                        :aria-valuenow="done"
-                        :aria-valuemax="total"
-                    >
-                        <div class="fill" :style="{ width: `${(done / total) * 100}%` }" />
-                    </div>
-                </div>
-
                 <EmptyState
                     v-if="list.groups.length === 0"
                     :icon="Icons.check"
@@ -153,14 +240,14 @@ useEventListener(document, 'visibilitychange', () => {
                     :key="group.categoryId ?? 'none'"
                     class="group"
                 >
-                    <h3>
+                    <h3 class="label">
                         {{
                             (group.categoryId && categoryNames.get(group.categoryId)) ??
                             t('shop.uncategorised')
                         }}
                     </h3>
                     <ul class="items">
-                        <li v-for="item in group.items" :key="item.id">
+                        <li v-for="item in group.items" :key="item.id" class="row">
                             <button
                                 type="button"
                                 role="checkbox"
@@ -171,7 +258,12 @@ useEventListener(document, 'visibilitychange', () => {
                                 <span class="box" />
                                 <span class="text">
                                     <span class="name">{{ item.name }}</span>
-                                    <span v-if="item.note" class="note">{{ item.note }}</span>
+                                    <span v-if="item.note || storeTag(item)" class="note">
+                                        <span v-if="storeTag(item)" class="store-tag">
+                                            <i :class="Icons.shop" />{{ storeTag(item) }}
+                                        </span>
+                                        {{ item.note }}
+                                    </span>
                                 </span>
                                 <i
                                     v-if="shop.pendingItemIds.has(item.id)"
@@ -187,12 +279,21 @@ useEventListener(document, 'visibilitychange', () => {
                                     {{ DateUtil.formatShort(item.neededBy) }}
                                 </span>
                             </button>
+                            <button
+                                type="button"
+                                class="more"
+                                :aria-label="t('shop.item_store.more', { name: item.name })"
+                                aria-haspopup="true"
+                                @click="openItemMenu($event, item)"
+                            >
+                                <i :class="Icons.ellipsis" />
+                            </button>
                         </li>
                     </ul>
                 </section>
 
                 <section v-if="list.checked.length" class="group checked">
-                    <h3>{{ t('shop.in_cart', list.checked.length) }}</h3>
+                    <h3 class="label">{{ t('shop.in_cart', list.checked.length) }}</h3>
                     <ul class="items">
                         <li v-for="item in list.checked" :key="item.id">
                             <button
@@ -241,34 +342,79 @@ useEventListener(document, 'visibilitychange', () => {
     padding: $spacing-2xl 0;
 }
 
-.shop-header {
+// Sticky, so the store and the count stay in reach while scrolling the list
+.toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: $spacing-sm;
-    min-height: 32px;
+    min-height: calc($touch-target + $spacing-sm + env(safe-area-inset-top));
+    margin: (-$spacing-md) (-$spacing-md) $spacing-sm;
+    padding: calc($spacing-xs + env(safe-area-inset-top)) $spacing-md $spacing-xs;
+    background: $background-color;
 
-    .range {
+    .active-store {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacing-xs;
+        min-width: 0;
+        color: $primary-color;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-semibold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        i {
+            font-size: $font-size-xs;
+        }
+    }
+
+    .filter {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: $touch-target;
+        height: $touch-target;
+        margin-right: -$spacing-sm;
+        border: none;
+        border-radius: $radius-full;
+        background: none;
         color: $text-muted-color;
-        font-weight: $font-weight-medium;
+        font-size: $font-size-lg;
+        cursor: pointer;
+
+        &:active {
+            background: $hover-color;
+        }
+
+        &.active {
+            color: $primary-color;
+        }
+
+        i {
+            font-size: inherit;
+        }
+    }
+
+    .spacer {
+        flex: 1;
     }
 
     .status {
         display: inline-flex;
         align-items: center;
         gap: $spacing-xs;
-        padding: $spacing-xxs $spacing-sm;
-        border-radius: $radius-full;
-        font-size: $font-size-xs;
+        font-size: $font-size-sm;
         font-weight: $font-weight-semibold;
 
         &.offline {
+            padding: $spacing-xxs $spacing-sm;
+            border-radius: $radius-full;
             background: $saffron-color;
             color: var(--p-surface-950);
-        }
-
-        &.live {
-            color: $herb-color;
         }
 
         .dot {
@@ -278,73 +424,40 @@ useEventListener(document, 'visibilitychange', () => {
             background: $herb-color;
         }
     }
-}
 
-.saved-at {
-    color: $text-muted-color;
-    font-size: $font-size-xs;
-}
+    .count {
+        color: $text-muted-color;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-semibold;
+        font-variant-numeric: tabular-nums;
+    }
 
-.stores {
-    display: flex;
-    gap: $spacing-sm;
-    margin: $spacing-sm-md (-$spacing-md) 0;
-    padding: 0 $spacing-md;
-    overflow-x: auto;
-    scrollbar-width: none;
+    // The progress is the bottom edge of the bar
+    .bar {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 3px;
+        background: $border-color;
 
-    .store {
-        display: inline-flex;
-        align-items: center;
-        gap: $spacing-sm;
-        flex-shrink: 0;
-        min-height: $touch-target;
-        padding: 0 $spacing-md;
-        border: 1px solid $border-color;
-        border-radius: $radius-full;
-        background: $card-color;
-        color: $text-color;
-        font: inherit;
-        font-weight: $font-weight-medium;
-        cursor: pointer;
-
-        &.active {
-            border-color: $primary-color;
-            background: $primary-color;
-            color: $primary-contrast-color;
+        .fill {
+            height: 100%;
+            background: $herb-color;
+            transition: width 0.3s ease;
         }
     }
 }
 
-.progress {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-xs;
-    margin: $spacing-md 0;
-    color: $text-muted-color;
-    font-size: $font-size-sm;
-
-    .bar {
-        height: 6px;
-        border-radius: $radius-full;
-        background: $border-color;
-        overflow: hidden;
-    }
-
-    .fill {
-        height: 100%;
-        border-radius: $radius-full;
-        background: $herb-color;
-        transition: width 0.3s ease;
-    }
-}
-
 .group {
-    margin-bottom: $spacing-lg;
+    margin-bottom: $spacing-sm-md;
 
-    h3 {
-        margin-bottom: $spacing-sm;
-        font-size: $font-size-md;
+    .label {
+        margin: 0 0 $spacing-xs $spacing-xs;
+        color: $text-muted-color;
+        font-family: inherit;
+        font-size: $font-size-xs;
+        font-weight: $font-weight-semibold;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
     }
 }
 
@@ -360,14 +473,48 @@ useEventListener(document, 'visibilitychange', () => {
     }
 }
 
+.row {
+    display: flex;
+    align-items: stretch;
+}
+
+// The ⋮ button: a full-height target at the end of the row, apart from the tick target
+.more {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: $touch-target;
+    border: none;
+    background: none;
+    color: $text-muted-color;
+    cursor: pointer;
+
+    &:active {
+        background: $hover-color;
+    }
+}
+
+.store-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    margin-right: $spacing-xs;
+    color: $primary-color;
+    font-weight: $font-weight-medium;
+
+    i {
+        font-size: $font-size-xs;
+    }
+}
+
 // The whole row is the tap target: one thumb, no aiming
 .item {
     display: flex;
     align-items: center;
     gap: $spacing-sm-md;
     width: 100%;
-    min-height: 64px;
-    padding: $spacing-sm $spacing-md;
+    min-height: 56px;
+    padding: $spacing-xs $spacing-md;
     border: none;
     background: none;
     color: $text-color;

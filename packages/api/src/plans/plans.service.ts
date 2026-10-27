@@ -20,6 +20,7 @@ import {
     type ListItem,
     type ListItemCheckRequest,
     type ListItemRequest,
+    type ListItemStoreRequest,
     type ListItemUpdateRequest,
     type Plan,
     PlanEventKind,
@@ -33,7 +34,8 @@ const MAX_PLAN_DAYS = 31;
 const ITEM_SELECT = `
     SELECT li.id, li.ingredient_id AS "ingredientId", i.name, i.category_id AS "categoryId",
            ARRAY(SELECT ds.store_id FROM ingredient_default_stores ds
-                 WHERE ds.ingredient_id = i.id)::text[] AS "storeIds",
+                 WHERE ds.ingredient_id = i.id)::text[] AS "defaultStoreIds",
+           li.store_override AS "storeOverride", li.store_id AS "storeId",
            li.note, li.needed_by AS "neededBy", li.manual,
            li.added_by_id AS "addedById", added_by.name AS "addedByName",
            li.checked_at AS "checkedAt",
@@ -318,6 +320,37 @@ export class PlansService {
         return item;
     }
 
+    /** Sets where an item is bought on this list (or back to the ingredient's default stores) */
+    public async setItemStore(
+        planId: string,
+        itemId: string,
+        request: ListItemStoreRequest,
+        userId: string,
+    ): Promise<ListItem> {
+        try {
+            const result = await this.listItemRepository.update(
+                { id: itemId, planId },
+                {
+                    storeOverride: request.override,
+                    storeId: request.override ? request.storeId : null,
+                },
+            );
+            if (!result.affected) {
+                throw PlansService.itemNotFound(itemId);
+            }
+        } catch (error) {
+            if (DatabaseHelper.isForeignKeyViolation(error)) {
+                throw ApiException.invalidRequest(
+                    `Store '${String(request.storeId)}' does not exist`,
+                );
+            }
+            throw error;
+        }
+        const item = await this.getItem(planId, itemId);
+        this.planEvents.emit(planId, { kind: PlanEventKind.ITEM_CHANGED, item, byUserId: userId });
+        return item;
+    }
+
     /** Items of the previous plan that were not ticked off and are not on this list yet */
     public async getCarryOverCandidates(planId: string): Promise<CarryOverCandidates> {
         const plan = await this.getEntity(planId);
@@ -361,8 +394,10 @@ export class PlansService {
             );
         }
         await this.planRepository.query(
-            `INSERT INTO list_items (plan_id, ingredient_id, manual, note, added_by_id)
-             SELECT $1, li.ingredient_id, TRUE, li.note, $3 FROM list_items li
+            `INSERT INTO list_items
+                 (plan_id, ingredient_id, manual, note, store_override, store_id, added_by_id)
+             SELECT $1, li.ingredient_id, TRUE, li.note, li.store_override, li.store_id, $3
+             FROM list_items li
              WHERE li.id = ANY($2::uuid[])
              ON CONFLICT (plan_id, ingredient_id) DO UPDATE SET manual = TRUE`,
             [planId, itemIds, userId],

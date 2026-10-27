@@ -34,7 +34,7 @@ export const commonRoutes = [
         path: '/winkelen',
         name: routesCommon.SHOP,
         component: () => import('@/views/shop/ShopView.vue'),
-        meta: { title: 'nav.shop' },
+        meta: { title: 'nav.shop', hideTopBar: true },
     },
     {
         // Nested, so the "Gerechten" navigation item stays active on every library page

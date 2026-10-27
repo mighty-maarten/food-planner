@@ -36,6 +36,7 @@ import {
     ListItem,
     ListItemCheckRequest,
     ListItemRequest,
+    ListItemStoreRequest,
     ListItemUpdateRequest,
     Plan,
     PlanEvent,
@@ -193,6 +194,21 @@ export class PlansController {
         @CurrentUserId() userId: string,
     ): Promise<ListItem> {
         return this.plansService.setItemChecked(planId, itemId, request, userId);
+    }
+
+    @Put(`${ITEM}/store`)
+    @ApiOperation({
+        summary: 'Choose where an item is bought on this list',
+        description: "`override: false` goes back to the ingredient's default stores.",
+    })
+    @ApiOkResponse({ type: ListItem })
+    setListItemStore(
+        @Param(routeParams.planId, ParseUUIDPipe) planId: string,
+        @Param(routeParams.itemId, ParseUUIDPipe) itemId: string,
+        @Body() request: ListItemStoreRequest,
+        @CurrentUserId() userId: string,
+    ): Promise<ListItem> {
+        return this.plansService.setItemStore(planId, itemId, request, userId);
     }
 
     @Sse(`${PLAN}/events`)

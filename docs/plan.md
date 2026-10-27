@@ -80,6 +80,12 @@ home.
   ticked items drop to the bottom and can be unticked.
 - Filter by store ("I'm at store A": its items plus items without a store) and group by category
   in that store's order.
+- Per item, the store can deviate from the ingredient's defaults for this list only: the ⋮ menu
+  of an item in shop mode (or the item dialog in build mode) offers the default, a store or any
+  store. The filter uses this choice; carry over keeps it. Offline it is queued like a tick.
+- Shop mode has no top bar on phones: one sticky toolbar with the store choice, the live/offline
+  status and the count, the progress as its bottom edge, and small category labels, so the list
+  starts right at the top.
 - "Needed by" is shown on every item.
 - Works offline: the active list is cached on the device and ticks made offline are synced when the
   connection is back. Two people can shop at the same time (e.g. in two stores): ticks show up live
@@ -137,6 +143,22 @@ Wo: Pitta met bloemkool/courgette
 - Many duplicates and variants ("Pitta met bloemkool en courgette" / "Pitta met
   bloemkool/courgette"): cluster them, produce a review file (canonical name ← variants) for
   Maarten to approve, then load it with a seed script.
+- Decided while building milestone 5:
+  - The export is `export.txt` in the repository root, the review file `import/review.txt`; both
+    are git-ignored (personal data). See the README, "Importing old menus".
+  - Day lines are read with or without `:`, also checklist lines (`- [ ] Ma:`) and labels
+    (`middag:`). `A => B` means B was made. `/`, `x`, `?` or nothing is no cooking. Eating out,
+    work, "bij mama" and the like go under `[skip]` (movable to `[dishes]`).
+  - Parentheses: URLs become the source, comma lists (`Cantonese rijst (ei, hesp, prei)`) become
+    ingredients, notes (`zonder ajuin`, `ok`) are dropped.
+  - Dishes are grouped when they share at least 75% of their words (word order, filler words,
+    plurals and one-letter typos ignored); the most used spelling names the dish. "Spaghetti"
+    and "Spaghetti carbonara" stay apart.
+  - Proposed ingredients come from the name ("Zalm met erwten en patatten"); dish types
+    (wok, soep, slaatje, ...) are left out, risotto becomes Risottorijst. Ingredient spellings
+    are merged in the `[ingredients]` section.
+  - `dishes.historical_count` keeps how often a dish was planned before the app; the dish picker
+    sorts by it plus the plans in the app. The load is one transaction and can run again.
 
 ## Milestones
 
@@ -149,10 +171,11 @@ Wo: Pitta met bloemkool/courgette
    dishes (pick ingredients, merge, needed-by date), free items, carry over from the previous plan.
 4. **Shop mode** (done): store filter, grouping by category in store order, ticking, offline cache
    and sync queue (IndexedDB), live updates over SSE.
-5. **Import**: parse the notes export, cluster duplicates, review file, seed script.
+5. **Import** (done): parse the notes export, cluster duplicates, review file, seed script.
 6. **Infrastructure and deploy**: Dockerfile and Compose for the app, proxy LXC, img-manager
    refactor, Food Planner LXC, deployment runbook (`DEPLOYMENT.md`), backups.
 
 ## Open questions
 
-- Path of the full Apple Notes export (needed for milestone 5).
+- Load the reviewed import into production once it is deployed (milestone 6): copy the review
+  file to the server and run `npm run import -- load --review <file>` in the app container.

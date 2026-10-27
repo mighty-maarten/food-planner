@@ -11,7 +11,12 @@ import { ShopCache } from '@/offline/shop-cache';
 import type { ListItem, Plan } from '@/api/services/types/plans';
 
 vi.mock('@/api/services/plans-api', () => ({
-    PlansApi: { getPlans: vi.fn(), getPlan: vi.fn(), setItemChecked: vi.fn() },
+    PlansApi: {
+        getPlans: vi.fn(),
+        getPlan: vi.fn(),
+        setItemChecked: vi.fn(),
+        setItemStore: vi.fn(),
+    },
 }));
 vi.mock('@/api/services/categories-api', () => ({ CategoriesApi: { getCategories: vi.fn() } }));
 vi.mock('@/api/services/stores-api', () => ({ StoresApi: { getStores: vi.fn() } }));
@@ -33,6 +38,8 @@ const item = (id: string, overrides: Partial<ListItem> = {}): ListItem => ({
     name: id,
     categoryId: null,
     storeIds: [],
+    defaultStoreIds: [],
+    storeOverride: false,
     note: null,
     neededBy: null,
     neededByOverride: false,
@@ -139,7 +146,7 @@ describe('shop store', () => {
             if (current) await shop.toggle(current);
         }
         await shop.flush();
-        expect(shop.queue.map((t) => [t.itemId, t.checked])).toEqual([
+        expect(shop.queue.map((t) => [t.itemId, t.kind === 'check' && t.checked])).toEqual([
             ['milk', true],
             ['bread', false],
         ]);
@@ -196,6 +203,32 @@ describe('shop store', () => {
 
         expect(find('milk')?.checkedBy).toEqual(other);
         expect(find('bread')?.checkedBy).toEqual(me);
+    });
+
+    it('moves an item to another store at once, and keeps its tick queued apart', async () => {
+        vi.mocked(PlansApi.setItemChecked).mockRejectedValue(networkError());
+        vi.mocked(PlansApi.setItemStore).mockRejectedValue(networkError());
+        const shop = useShopStore();
+        await shop.start();
+        const bread = find('bread');
+        if (!bread) throw new Error('missing');
+
+        await shop.setItemStore(bread, true, 'carrefour');
+        const moved = find('bread');
+        if (moved) await shop.toggle(moved);
+        await shop.flush();
+
+        expect(find('bread')).toMatchObject({ storeOverride: true, storeIds: ['carrefour'] });
+        expect(find('bread')?.checkedAt).not.toBeNull();
+        expect(shop.queue.map((c) => c.kind)).toEqual(['store', 'check']);
+
+        const back = find('bread');
+        if (back) await shop.setItemStore(back, false, 'ignored');
+        expect(find('bread')).toMatchObject({ storeOverride: false, storeIds: [] });
+        expect(shop.queue).toEqual([
+            expect.objectContaining({ kind: 'check' }),
+            expect.objectContaining({ kind: 'store', override: false, storeId: null }),
+        ]);
     });
 
     it('remembers the chosen store on this device', () => {

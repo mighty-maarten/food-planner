@@ -19,7 +19,8 @@ cp packages/client/.env.example packages/client/.env.local
 
 cd packages/api
 docker compose up -d          # PostgreSQL 18 on localhost:5434
-npm run db:setup:local        # drop + create the database, migrate and seed (dev@example.com / ChangeMe123!)
+npm run db:setup:local        # drop + create the database, migrate and seed the users (see "Users")
+npm run db:seed-sample:local  # optional: sample stores (Lidl, Carrefour, ...), ingredients and dishes
 npm run start:local           # http://localhost:3000/api, Swagger on http://localhost:3000/swagger
 
 cd ../client
@@ -30,6 +31,10 @@ The API also applies pending migrations on startup.
 
 ## Users
 
+A database setup seeds `packages/api/src/database/files/data/users.local.sql` when it exists
+(real accounts, git-ignored like every `*.local.sql`), otherwise the development user of
+`users.sql` (`dev@example.com` / `ChangeMe123!`).
+
 There is no sign-up. Accounts are managed with the user CLI:
 
 ```sh
@@ -39,6 +44,29 @@ npm run user:local -- list
 npm run user:local -- set-password --email jane@example.com         # also logs out all devices
 npm run user -- list                                                # without rebuilding (also on the server)
 ```
+
+## Importing old menus
+
+The old week menus from Apple Notes become the start of the dish library, with how often each
+dish was planned (the dish picker suggests favourites first). Both files stay out of git: they
+are personal data.
+
+```sh
+# 1. Export the note to export.txt in the repository root, then write the review file
+cd packages/api
+npm run import:local -- review          # writes ../../import/review.txt
+
+# 2. Review import/review.txt: rename dishes, fix their ingredients, merge or skip dishes,
+#    merge ingredient spellings (the instructions are at the top of the file)
+
+# 3. Import (safe to run again: existing dishes only get their count updated)
+npm run import:local -- load --dry-run
+npm run import:local -- load
+```
+
+The export is one line per day (`Do: risotto met pompoen`): `/` or an empty day is no cooking,
+eating out and the like go under `[skip]`, URLs become the recipe's source, and spellings of the
+same dish are grouped (word order, filler words and small typos don't matter).
 
 ## Configuration
 

@@ -4,6 +4,7 @@ import type {
     ListItem,
     ListItemCheckRequest,
     ListItemRequest,
+    ListItemStoreRequest,
     ListItemUpdateRequest,
     Plan,
     PlanRequest,
@@ -69,6 +70,15 @@ export class PlansApi {
         request: ListItemCheckRequest,
     ): Promise<ListItem> {
         return HttpClient.put<ListItem>(`${ApiUrls.items(planId)}/${itemId}/checked`, request);
+    }
+
+    /** Where an item is bought on this list; the response is the item's current state */
+    public static async setItemStore(
+        planId: string,
+        itemId: string,
+        request: ListItemStoreRequest,
+    ): Promise<ListItem> {
+        return HttpClient.put<ListItem>(`${ApiUrls.items(planId)}/${itemId}/store`, request);
     }
 
     public static async getCarryOverCandidates(planId: string): Promise<CarryOverCandidates> {

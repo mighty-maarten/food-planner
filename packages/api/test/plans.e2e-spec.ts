@@ -24,6 +24,7 @@ describe('Plans (e2e)', () => {
         setDayIngredients: vi.fn(),
         addItem: vi.fn(),
         setItemChecked: vi.fn(),
+        setItemStore: vi.fn(),
     };
     let planEvents: PlanEventsService;
 
@@ -131,6 +132,29 @@ describe('Plans (e2e)', () => {
             await send('put', url, { checked: true }).expect(400);
             await send('put', url, { checked: true, at: 'yesterday' }).expect(400);
             expect(plansService.setItemChecked).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('PUT /:planId/items/:itemId/store', () => {
+        const url = `/api/${planId}/items/${dishId}/store`;
+
+        it('chooses a store, or any store with null', async () => {
+            await send('put', url, { override: true, storeId: planId }).expect(200);
+            await send('put', url, { override: true, storeId: null }).expect(200);
+
+            expect(plansService.setItemStore).toHaveBeenNthCalledWith(
+                2,
+                planId,
+                dishId,
+                { override: true, storeId: null },
+                testUser.id,
+            );
+        });
+
+        it('validates the request', async () => {
+            await send('put', url, { override: true, storeId: 'lidl' }).expect(400);
+            await send('put', url, { storeId: null }).expect(400);
+            expect(plansService.setItemStore).not.toHaveBeenCalled();
         });
     });
 

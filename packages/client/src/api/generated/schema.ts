@@ -432,6 +432,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/api/plans/{planId}/items/{itemId}/store': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose where an item is bought on this list
+         * @description `override: false` goes back to the ingredient's default stores.
+         */
+        put: operations['setListItemStore'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/api/plans/{planId}/events': {
         parameters: {
             query?: never;
@@ -557,6 +577,8 @@ export interface components {
             ingredientNames: string[];
             /** @description Has a recipe text or a source URL. */
             hasRecipe: boolean;
+            /** @description How often it was planned: in the app plus before it (imported menus). */
+            timesPlanned: number;
         };
         DishIngredient: {
             ingredientId: string;
@@ -636,8 +658,12 @@ export interface components {
             ingredientId: string;
             name: string;
             categoryId: string | null;
-            /** @description Default stores of the ingredient. */
+            /** @description Where it is bought on this list: the override, else the default stores of the ingredient. Empty: any store. */
             storeIds: string[];
+            /** @description Default stores of the ingredient. */
+            defaultStoreIds: string[];
+            /** @description The store was chosen for this list (storeIds). */
+            storeOverride: boolean;
             note: string | null;
             /** @description YYYY-MM-DD: the override, else the first day a planned dish uses it. Null: no date. */
             neededBy: string | null;
@@ -687,8 +713,14 @@ export interface components {
             /** @description ISO timestamp of the tick on the device. Only applied when newer than the last change of the item (the last tick wins); future times count as now. */
             at: string;
         };
+        ListItemStoreRequest: {
+            /** @description False: back to the ingredient's default stores. */
+            override: boolean;
+            /** @description With override: the store, or null for any store. Ignored without. */
+            storeId: string | null;
+        };
         /** @enum {string} */
-        PlanEventKind: 'item-checked' | 'plan-changed' | 'ping';
+        PlanEventKind: 'item-checked' | 'item-changed' | 'plan-changed' | 'ping';
         PlanEvent: {
             kind: components['schemas']['PlanEventKind'];
             item?: components['schemas']['ListItem'];
@@ -750,6 +782,7 @@ export type PlanDayIngredientsRequest = components['schemas']['PlanDayIngredient
 export type ListItemRequest = components['schemas']['ListItemRequest'];
 export type ListItemUpdateRequest = components['schemas']['ListItemUpdateRequest'];
 export type ListItemCheckRequest = components['schemas']['ListItemCheckRequest'];
+export type ListItemStoreRequest = components['schemas']['ListItemStoreRequest'];
 export type PlanEventKind = components['schemas']['PlanEventKind'];
 export type PlanEvent = components['schemas']['PlanEvent'];
 export type PlanRange = components['schemas']['PlanRange'];
@@ -1947,6 +1980,48 @@ export interface operations {
         requestBody: {
             content: {
                 'application/json': components['schemas']['ListItemCheckRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ListItem'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    setListItemStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ListItemStoreRequest'];
             };
         };
         responses: {

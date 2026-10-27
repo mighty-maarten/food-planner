@@ -6,3 +6,7 @@ node_modules
 # Production environment and runtime data (server only)
 .env.production
 /data/
+
+# Apple Notes export and the import review files: personal data, never commit
+/export.txt
+/import/

@@ -19,13 +19,17 @@
         "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
         "db:setup": "node dist/database/scripts/index.js -i -m -s",
         "db:migrate": "node dist/database/scripts/index.js -m",
+        "db:seed-sample": "node dist/database/scripts/index.js -l",
         "db:setup:local": "npm run build && npm run db:setup",
         "db:migrate:local": "npm run build && npm run db:migrate",
+        "db:seed-sample:local": "npm run build && npm run db:seed-sample",
         "user": "node dist/users/scripts/user-cli.js",
         "typecheck": "tsc --noEmit",
         "user:local": "npm run build && npm run user --",
         "format:check": "prettier --check .",
-        "lint:fix": "eslint . --fix"
+        "lint:fix": "eslint . --fix",
+        "import": "node dist/import/import-cli.js",
+        "import:local": "npm run build && npm run import --"
     },
     "dependencies": {
         "@nestjs/common": "^12.2.0",
