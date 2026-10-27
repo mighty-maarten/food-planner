@@ -1,0 +1,45 @@
+# Production: the app and its database on the Food Planner LXC (see DEPLOYMENT.md).
+# Locally the database runs from packages/api/docker-compose.yml instead.
+name: food-planner
+
+services:
+    postgres:
+        image: postgres:18-alpine
+        restart: unless-stopped
+        env_file: .env.production
+        # The database credentials come from the same DATABASE_* variables the app uses
+        entrypoint:
+            - sh
+            - -c
+            - |
+                export POSTGRES_USER="$$DATABASE_USERNAME"
+                export POSTGRES_PASSWORD="$$DATABASE_PASSWORD"
+                export POSTGRES_DB="$$DATABASE_NAME"
+                exec docker-entrypoint.sh postgres
+        volumes:
+            # PostgreSQL 18 keeps its data in a versioned folder below this path
+            - ./data/postgres:/var/lib/postgresql
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U "$$DATABASE_USERNAME" -d "$$DATABASE_NAME"']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        logging: &logging
+            driver: json-file
+            options:
+                max-size: 10m
+                max-file: '5'
+
+    app:
+        build: .
+        restart: unless-stopped
+        depends_on:
+            postgres:
+                condition: service_healthy
+        env_file: .env.production
+        environment:
+            DATABASE_HOST: postgres
+        # Reached by the reverse proxy LXC over the LAN; ports 80/443 are forwarded to the proxy
+        ports:
+            - '${APP_PORT:-3000}:3000'
+        logging: *logging

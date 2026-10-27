@@ -12,17 +12,36 @@ export class DatabaseSetupService {
         private readonly databaseService: DatabaseService,
     ) {}
 
+    /**
+     * Creates the database on first start. An empty database (as the postgres Docker image
+     * creates it from POSTGRES_DB) only gets the initial definitions.
+     */
     public async setupDatabaseIfNotExists(): Promise<void> {
         const postgresDataSource = await this.databaseService.getPostgresDataSource().initialize();
+        let exists: boolean;
         try {
-            if (await this.databaseExists(postgresDataSource)) {
-                return;
-            }
+            exists = await this.databaseExists(postgresDataSource);
         } finally {
             await postgresDataSource.destroy();
         }
-        console.log('Database does not exist yet, creating...');
-        await this.setupDatabase();
+        if (!exists) {
+            console.log('Database does not exist yet, creating...');
+            await this.setupDatabase();
+            return;
+        }
+
+        const dataSource = await this.databaseService.getDataSource().initialize();
+        try {
+            const [row] = await dataSource.query<{ table: string | null }[]>(
+                "SELECT to_regclass('public.versions')::text AS table",
+            );
+            if (!row?.table) {
+                console.log('Database is empty, adding the initial definitions...');
+                await this.applyDefinitions(dataSource);
+            }
+        } finally {
+            await dataSource.destroy();
+        }
     }
 
     /** Drops (if it exists) and recreates the app database with the initial definitions */
@@ -47,14 +66,19 @@ export class DatabaseSetupService {
 
         const dataSource = await this.databaseService.getDataSource().initialize();
         try {
-            await DatabaseHelper.processSqlFile(
-                join(import.meta.dirname, '../files/definitions/public.sql'),
-                dataSource,
-            );
+            await this.applyDefinitions(dataSource);
         } finally {
             await dataSource.destroy();
         }
         console.log('Created database and initial definitions successfully\n');
+    }
+
+    /** The tables the migrations build on (the migration version table) */
+    private async applyDefinitions(dataSource: DataSource): Promise<void> {
+        await DatabaseHelper.processSqlFile(
+            join(import.meta.dirname, '../files/definitions/public.sql'),
+            dataSource,
+        );
     }
 
     private async databaseExists(postgresDataSource: DataSource): Promise<boolean> {
