@@ -6,3 +6,7 @@
 .git
 .idea
 data
+# Local-only and personal files, never in an image (real accounts, Apple Notes export)
+**/*.local.sql
+export.txt
+import

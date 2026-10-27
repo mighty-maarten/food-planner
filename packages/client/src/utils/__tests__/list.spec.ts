@@ -12,6 +12,8 @@ const item = (
     name,
     categoryId,
     storeIds: [],
+    defaultStoreIds: [],
+    storeOverride: false,
     note: null,
     neededBy,
     neededByOverride: false,

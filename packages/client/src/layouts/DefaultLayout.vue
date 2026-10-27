@@ -86,7 +86,7 @@ async function logout() {
 
         <div class="main">
             <OfflineBanner />
-            <header class="top-bar">
+            <header v-if="!route.meta.hideTopBar" class="top-bar">
                 <h1>{{ pageTitle }}</h1>
                 <button
                     class="avatar"

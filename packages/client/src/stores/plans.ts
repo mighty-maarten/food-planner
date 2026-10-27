@@ -125,6 +125,19 @@ export const usePlansStore = defineStore('plans', () => {
         return update(planId, () => PlansApi.updateItem(planId, itemId, request));
     }
 
+    /** Where an item is bought on this list (override false: the ingredient's defaults) */
+    function setItemStore(
+        planId: string,
+        itemId: string,
+        override: boolean,
+        storeId: string | null,
+    ) {
+        return update(planId, async () => {
+            await PlansApi.setItemStore(planId, itemId, { override, storeId });
+            return PlansApi.getPlan(planId);
+        });
+    }
+
     function deleteItem(planId: string, itemId: string) {
         return update(planId, () => PlansApi.deleteItem(planId, itemId));
     }
@@ -156,6 +169,7 @@ export const usePlansStore = defineStore('plans', () => {
         setDayIngredients,
         addItem,
         updateItem,
+        setItemStore,
         deleteItem,
         loadCarryOverCandidates,
         carryOver,

@@ -1,6 +1,6 @@
 import type { Category, Store } from '@/api/services/types/library';
 import type { ListItem, Plan } from '@/api/services/types/plans';
-import type { PendingTick } from '@/offline/shop-cache';
+import type { PendingStoreChange, PendingTick } from '@/offline/shop-cache';
 import { DateUtil } from './date';
 import { TextUtil } from './text';
 
@@ -70,4 +70,22 @@ export function applyTick(
         checkedAt: tick.checked ? tick.at : null,
         checkedBy: tick.checked ? user : null,
     };
+}
+
+/** The item with its store chosen on this device, before the API confirms it */
+export function applyStoreChange(
+    item: ListItem,
+    change: Pick<PendingStoreChange, 'override' | 'storeId'>,
+): ListItem {
+    return {
+        ...item,
+        storeOverride: change.override,
+        storeIds: change.override ? (change.storeId ? [change.storeId] : []) : item.defaultStoreIds,
+    };
+}
+
+/** "Lidl", "Lidl, Aldi" or null for any store */
+export function storeNames(storeIds: string[], stores: Store[]): string | null {
+    const names = storeIds.flatMap((id) => stores.find((store) => store.id === id)?.name ?? []);
+    return names.length ? names.join(', ') : null;
 }

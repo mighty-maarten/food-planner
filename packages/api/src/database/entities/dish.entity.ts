@@ -17,6 +17,10 @@ export class DishEntity extends BaseEntity {
     @Column({ type: 'int', nullable: true })
     servings!: number | null;
 
+    /** How often it was planned before the app (imported) */
+    @Column({ type: 'int', default: 0 })
+    historicalCount!: number;
+
     @OneToMany(() => DishIngredientEntity, (line) => line.dish)
     ingredients!: Relation<DishIngredientEntity>[];
 }

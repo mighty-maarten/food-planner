@@ -8,10 +8,10 @@ import { PlansApi } from '@/api/services/plans-api';
 import { StoresApi } from '@/api/services/stores-api';
 import type { Category, Store } from '@/api/services/types/library';
 import type { ListItem, Plan, PlanEvent } from '@/api/services/types/plans';
-import { type PendingTick, ShopCache } from '@/offline/shop-cache';
+import { type PendingChange, type PendingTick, ShopCache } from '@/offline/shop-cache';
 import { DateUtil } from '@/utils/date';
 import { pickCurrentPlan } from '@/utils/plan';
-import { applyTick } from '@/utils/shop';
+import { applyStoreChange, applyTick } from '@/utils/shop';
 
 // The chosen store is a convenience of this device
 const STORE_FILTER_KEY = 'fp_shop_store';
@@ -41,7 +41,7 @@ export const useShopStore = defineStore('shop', () => {
     const stores = ref<Store[]>([]);
     const savedAt = ref<string | null>(null);
     const storeId = ref<string | null>(readStoreFilter());
-    const queue = ref<PendingTick[]>([]);
+    const queue = ref<PendingChange[]>([]);
 
     const isLoading = ref(false);
     /** The last refresh did not reach the API (shown from the cache, if any) */
@@ -50,7 +50,7 @@ export const useShopStore = defineStore('shop', () => {
     const hasNoPlan = ref(false);
     const isLive = ref(false);
 
-    const pendingItemIds = computed(() => new Set(queue.value.map((tick) => tick.itemId)));
+    const pendingItemIds = computed(() => new Set(queue.value.map((change) => change.itemId)));
 
     let closeEvents: (() => void) | null = null;
     let listeningTo: string | null = null;
@@ -84,17 +84,46 @@ export const useShopStore = defineStore('shop', () => {
         );
     }
 
-    /** The plan from the API, with this device's unsent ticks on top */
+    function applyChange(item: ListItem, change: PendingChange): ListItem {
+        return change.kind === 'check'
+            ? applyTick(item, change, currentUserReference())
+            : applyStoreChange(item, change);
+    }
+
+    /** The plan from the API, with this device's unsent changes on top */
     function withPendingTicks(loaded: Plan): Plan {
-        const user = currentUserReference();
-        const pending = queue.value.filter((tick) => tick.planId === loaded.id);
+        const pending = queue.value.filter((change) => change.planId === loaded.id);
         return {
             ...loaded,
-            items: loaded.items.map((item) => {
-                const tick = pending.find((t) => t.itemId === item.id);
-                return tick ? applyTick(item, tick, user) : item;
-            }),
+            items: loaded.items.map((item) =>
+                pending
+                    .filter((change) => change.itemId === item.id)
+                    .reduce((current, change) => applyChange(current, change), item),
+            ),
         };
+    }
+
+    /** Applies a change at once and queues it; only the last change of each kind counts */
+    async function change(item: ListItem, pending: PendingChange): Promise<void> {
+        replaceItem(applyChange(item, pending));
+        queue.value = [
+            ...queue.value.filter((c) => c.itemId !== item.id || c.kind !== pending.kind),
+            pending,
+        ];
+        await Promise.all([ShopCache.saveQueue(queue.value), saveSnapshot()]);
+        void flush();
+    }
+
+    function send(pending: PendingChange): Promise<ListItem> {
+        return pending.kind === 'check'
+            ? PlansApi.setItemChecked(pending.planId, pending.itemId, {
+                  checked: pending.checked,
+                  at: pending.at,
+              })
+            : PlansApi.setItemStore(pending.planId, pending.itemId, {
+                  override: pending.override,
+                  storeId: pending.storeId,
+              });
     }
 
     /** Shows the cached list at once, then loads the current one */
@@ -150,33 +179,49 @@ export const useShopStore = defineStore('shop', () => {
     async function toggle(item: ListItem): Promise<void> {
         if (!plan.value) return;
         const tick: PendingTick = {
+            kind: 'check',
             planId: plan.value.id,
             itemId: item.id,
             checked: !item.checkedAt,
             at: new Date().toISOString(),
         };
-        replaceItem(applyTick(item, tick, currentUserReference()));
-        // Only the last tick of an item matters
-        queue.value = [...queue.value.filter((t) => t.itemId !== item.id), tick];
-        await Promise.all([ShopCache.saveQueue(queue.value), saveSnapshot()]);
-        void flush();
+        await change(item, tick);
     }
 
-    /** Sends the queued ticks in order; stops at the first network error (retried later) */
+    /**
+     * Chooses where an item is bought on this list: a store, any store (null), or back to the
+     * ingredient's default stores (override false).
+     */
+    async function setItemStore(
+        item: ListItem,
+        override: boolean,
+        storeId: string | null,
+    ): Promise<void> {
+        if (!plan.value) return;
+        await change(item, {
+            kind: 'store',
+            planId: plan.value.id,
+            itemId: item.id,
+            override,
+            storeId: override ? storeId : null,
+        });
+    }
+
+    /** Sends the queued changes in order; stops at the first network error (retried later) */
     function flush(): Promise<void> {
         flushing ??= (async () => {
             try {
                 for (;;) {
-                    const tick = queue.value[0];
-                    if (!tick) break;
+                    const pending = queue.value[0];
+                    if (!pending) break;
                     try {
-                        const item = await PlansApi.setItemChecked(tick.planId, tick.itemId, {
-                            checked: tick.checked,
-                            at: tick.at,
-                        });
+                        const item = await send(pending);
                         queue.value = queue.value.slice(1);
-                        // A newer tick of the same item may have been queued meanwhile
-                        if (!pendingItemIds.value.has(item.id) && plan.value?.id === tick.planId) {
+                        // A newer change of the same item may have been queued meanwhile
+                        if (
+                            !pendingItemIds.value.has(item.id) &&
+                            plan.value?.id === pending.planId
+                        ) {
                             replaceItem(item);
                         }
                     } catch (error) {
@@ -198,8 +243,8 @@ export const useShopStore = defineStore('shop', () => {
     }
 
     function onEvent(event: PlanEvent): void {
-        if (event.kind === 'item-checked' && event.item) {
-            // This device's own unsent tick is newer than what others did before it
+        if ((event.kind === 'item-checked' || event.kind === 'item-changed') && event.item) {
+            // This device's own unsent change is newer than what others did before it
             if (!pendingItemIds.value.has(event.item.id)) {
                 replaceItem(event.item);
                 void saveSnapshot();
@@ -256,6 +301,7 @@ export const useShopStore = defineStore('shop', () => {
         start,
         refresh,
         toggle,
+        setItemStore,
         flush,
         resume,
         stop,

@@ -81,8 +81,17 @@ export class ListItem {
     public name!: string;
     @ApiProperty({ type: String, nullable: true })
     public categoryId!: string | null;
-    @ApiProperty({ type: [String], description: 'Default stores of the ingredient.' })
+    @ApiProperty({
+        type: [String],
+        description:
+            'Where it is bought on this list: the override, else the default stores of the ' +
+            'ingredient. Empty: any store.',
+    })
     public storeIds!: string[];
+    @ApiProperty({ type: [String], description: 'Default stores of the ingredient.' })
+    public defaultStoreIds!: string[];
+    @ApiProperty({ description: 'The store was chosen for this list (storeIds).' })
+    public storeOverride!: boolean;
     @ApiProperty({ type: String, nullable: true })
     public note!: string | null;
     @ApiProperty({
@@ -226,9 +235,26 @@ export class ListItemCheckRequest {
     public at!: string;
 }
 
+export class ListItemStoreRequest {
+    @ApiProperty({ description: "False: back to the ingredient's default stores." })
+    @IsBoolean()
+    public override!: boolean;
+
+    @ApiProperty({
+        type: String,
+        nullable: true,
+        description: 'With override: the store, or null for any store. Ignored without.',
+    })
+    @ValidateIf((_object, value) => value !== null)
+    @IsUUID()
+    public storeId!: string | null;
+}
+
 export const PlanEventKind = {
     /** The checked state of an item changed, `item` has its new state */
     ITEM_CHECKED: 'item-checked',
+    /** Another shop mode change of an item (its store), `item` has its new state */
+    ITEM_CHANGED: 'item-changed',
     /** Anything else changed (dishes, list items): reload the plan */
     PLAN_CHANGED: 'plan-changed',
     /** Keeps the connection open through proxies */

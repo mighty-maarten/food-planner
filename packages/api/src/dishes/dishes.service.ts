@@ -26,7 +26,10 @@ export class DishesService {
                     COALESCE(
                         array_agg(i.name ORDER BY di.position) FILTER (WHERE i.id IS NOT NULL),
                         '{}'
-                    ) AS "ingredientNames"
+                    ) AS "ingredientNames",
+                    d.historical_count
+                        + (SELECT count(*)::int FROM plan_days pd WHERE pd.dish_id = d.id)
+                        AS "timesPlanned"
              FROM dishes d
              LEFT JOIN dish_ingredients di ON di.dish_id = d.id
              LEFT JOIN ingredients i ON i.id = di.ingredient_id

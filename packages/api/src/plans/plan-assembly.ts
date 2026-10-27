@@ -16,7 +16,10 @@ export interface ListItemRow {
     ingredientId: string;
     name: string;
     categoryId: string | null;
-    storeIds: string[];
+    /** The ingredient's default stores */
+    defaultStoreIds: string[];
+    storeOverride: boolean;
+    storeId: string | null;
     note: string | null;
     neededBy: string | null;
     manual: boolean;
@@ -36,7 +39,10 @@ export function toListItem(row: ListItemRow, sources: ListItemSource[]): ListIte
         ingredientId: row.ingredientId,
         name: row.name,
         categoryId: row.categoryId,
-        storeIds: row.storeIds,
+        // Where it is bought on this list: the override, else the ingredient's defaults
+        storeIds: row.storeOverride ? (row.storeId ? [row.storeId] : []) : row.defaultStoreIds,
+        defaultStoreIds: row.defaultStoreIds,
+        storeOverride: row.storeOverride,
         note: row.note,
         // The first day a planned dish needs it, unless set by hand
         neededBy: row.neededBy ?? sorted[0]?.date ?? null,

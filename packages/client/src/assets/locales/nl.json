@@ -86,7 +86,8 @@
             "search": "Zoek of typ een nieuw gerecht",
             "create": "Nieuw gerecht “{name}”",
             "no_cooking": "Niet koken",
-            "no_dishes": "Nog geen gerechten. Typ een naam om er een te maken."
+            "no_dishes": "Nog geen gerechten. Typ een naam om er een te maken.",
+            "times_planned": "{count} keer gepland | {count} keer gepland"
         },
         "list": {
             "add_placeholder": "Iets toevoegen, bv. brood",
@@ -109,7 +110,10 @@
             "needed_by_auto_none": "Automatisch (geen datum)",
             "for_dishes": "Voor",
             "remove": "Van de lijst halen",
-            "removed": "Van de lijst gehaald"
+            "removed": "Van de lijst gehaald",
+            "store": "Winkel",
+            "store_default": "Standaard ({stores})",
+            "store_any": "Elke winkel"
         },
         "carry_over": {
             "banner": "{count} item van het vorige weekmenu niet afgevinkt | {count} items van het vorige weekmenu niet afgevinkt",
@@ -156,10 +160,22 @@
             "live": "Live",
             "offline": "Offline",
             "pending": "{count} wacht op verbinding | {count} wachten op verbinding",
-            "saved_at": "Bewaard om {time}"
+            "saved_at": "Bewaard om {time}",
+            "live_hint": "Afvinken van anderen verschijnt meteen",
+            "offline_hint": "Lijst bewaard om {time}"
         },
         "pending_item": "Nog niet gesynchroniseerd",
-        "needed_by": "{date}"
+        "needed_by": "{date}",
+        "choose_store": "Kies een winkel",
+        "progress_short": "{done}/{total}",
+        "item_store": {
+            "more": "Winkel kiezen voor {name}",
+            "title": "Waar koop je {name}?",
+            "default": "Standaard ({stores})",
+            "any": "Elke winkel",
+            "moved": "{name} → {store}"
+        },
+        "filter": "Filter op winkel"
     },
     "dishes": {
         "empty": {

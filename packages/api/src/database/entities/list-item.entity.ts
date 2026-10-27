@@ -30,6 +30,14 @@ export class ListItemEntity extends BaseEntity {
     @Column({ type: 'uuid', nullable: true })
     checkedById!: string | null;
 
+    /** Bought elsewhere than the ingredient's default stores, for this list only */
+    @Column({ type: 'boolean', default: false })
+    storeOverride!: boolean;
+
+    /** With an override: the store, or null for any store */
+    @Column({ type: 'uuid', nullable: true })
+    storeId!: string | null;
+
     /** When the checked state last changed on the device; the last tick wins */
     @Column({ type: 'timestamptz', nullable: true })
     checkChangedAt!: Date | null;

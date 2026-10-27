@@ -11,6 +11,7 @@ const options = {
     initialise: false,
     migrate: false,
     seed: false,
+    sampleLibrary: false,
 };
 
 const args = process.argv.slice(2);
@@ -23,17 +24,20 @@ OPTIONS:
     -h, --help\t\t prints help information
     -i, --initialize\t drops and creates the database with the initial definitions
     -m, --migrate\t runs all pending migrations
-    -s, --seed\t\t seeds the database
+    -s, --seed\t\t seeds the users (the local development user)
+    -l, --sample-library\t adds sample stores, ingredients and dishes (safe on existing data)
 
 EXAMPLES:
     Setup a local database:    npm run db:setup:local
     Migrate a local database:  npm run db:migrate:local
+    Add the sample library:    npm run db:seed-sample:local
 `);
     process.exit(0);
 }
 options.initialise = args.includes('--initialize') || args.includes('-i');
 options.migrate = args.includes('--migrate') || args.includes('-m');
 options.seed = args.includes('--seed') || args.includes('-s');
+options.sampleLibrary = args.includes('--sample-library') || args.includes('-l');
 
 loadLocalEnvFile();
 const app = await NestFactory.createApplicationContext(DatabaseScriptModule);
@@ -42,7 +46,10 @@ const setupService = app.get(DatabaseSetupService);
 let exitCode = 0;
 
 try {
-    if ((options.initialise || options.seed) && !configService.get('ALLOW_DATABASE_SETUP')) {
+    if (
+        (options.initialise || options.seed || options.sampleLibrary) &&
+        !configService.get('ALLOW_DATABASE_SETUP')
+    ) {
         throw new Error(
             `Initialising or seeding is not allowed on environment '${configService.get('APP_ENV')}' (ALLOW_DATABASE_SETUP=false)`,
         );
@@ -60,7 +67,10 @@ try {
             await app.get(DatabaseMigrateService).migrate(dataSource);
         }
         if (options.seed) {
-            await app.get(DatabaseSeedService).seed(dataSource);
+            await app.get(DatabaseSeedService).seedUsers(dataSource);
+        }
+        if (options.sampleLibrary) {
+            await app.get(DatabaseSeedService).seedSampleLibrary(dataSource);
         }
     } finally {
         await dataSource.destroy();

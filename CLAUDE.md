@@ -6,7 +6,7 @@ Scope, design decisions and milestones: `docs/plan.md` (keep it up to date when 
 ## Commands
 
 - Root: `npm run check` (format, lint, typecheck, tests, build), `npm run api:types` (after API contract changes)
-- API: `npm run start:local`, `npm test`, `npm run test:e2e`, `npm run db:setup:local`, `npm run db:migrate:local`, `npm run user:local -- <command>`, `npm run typecheck`
+- API: `npm run start:local`, `npm test`, `npm run test:e2e`, `npm run db:setup:local`, `npm run db:migrate:local`, `npm run db:seed-sample:local`, `npm run user:local -- <command>`, `npm run import:local -- <command>`, `npm run typecheck`
 - Client: `npm run dev`, `npm run test:unit`, `npm run type-check`
 - Local DB: `docker compose up -d` in `packages/api/` (PostgreSQL 18 on port 5434); API on port 3000, client on 5173 (proxies `/api`)
 

@@ -4,6 +4,7 @@ export type {
     ListItem,
     ListItemCheckRequest,
     ListItemRequest,
+    ListItemStoreRequest,
     ListItemSource,
     ListItemUpdateRequest,
     Plan,

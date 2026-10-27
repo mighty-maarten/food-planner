@@ -10,5 +10,7 @@ declare module 'vue-router' {
         title?: string;
         /** Accessible without being logged in */
         public?: boolean;
+        /** No mobile top bar: the page uses the height itself (shop mode) */
+        hideTopBar?: boolean;
     }
 }

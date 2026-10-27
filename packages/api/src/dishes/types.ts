@@ -63,6 +63,10 @@ export class DishListItem {
     public ingredientNames!: string[];
     @ApiProperty({ description: 'Has a recipe text or a source URL.' })
     public hasRecipe!: boolean;
+    @ApiProperty({
+        description: 'How often it was planned: in the app plus before it (imported menus).',
+    })
+    public timesPlanned!: number;
 
     constructor(dish: DishListItem) {
         Object.assign(this, dish);
