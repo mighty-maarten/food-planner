@@ -183,12 +183,11 @@ Wo: Pitta met bloemkool/courgette
 4. **Shop mode** (done): store filter, grouping by category in store order, ticking, offline cache
    and sync queue (IndexedDB), live updates over SSE.
 5. **Import** (done): parse the notes export, cluster duplicates, review file, seed script.
-6. **Infrastructure and deploy** (prepared, the server steps are Maarten's): Dockerfile and
-   Compose for the app, proxy LXC, img-manager refactor, Food Planner LXC, deployment runbook
-   (`DEPLOYMENT.md`), backups. The cutover runbook is `proxy-cutover-2026-10.md` in the
-   `home-server` repository.
+6. **Infrastructure and deploy** (done, live since 2026-10-27 at https://food-planner.mighty.be):
+   Dockerfile and Compose for the app, proxy LXC, img-manager refactor, Food Planner LXC,
+   deployment runbook (`DEPLOYMENT.md`), backups. The cutover runbook is
+   `proxy-cutover-2026-10.md` in the `home-server` repository.
 
 ## Open questions
 
-- Load the reviewed import into production once it is deployed (milestone 6): copy the review
-  file to the server and run `npm run import -- load --review <file>` in the app container.
+None at the moment. The old menus were imported into production on 2026-10-27.

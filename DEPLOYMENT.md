@@ -95,10 +95,13 @@ After a change: `docker compose up -d`.
   `s3://mighty-proxmox-backups` at 03:00. Restores the whole LXC.
 - **Database dump** (`scripts/backup-db.sh`): daily at 01:30 to `/opt/food-planner/backups`,
   14 days kept. Part of the vzdump of the same night, so it is off-site too. Restores only the
-  database, into any PostgreSQL 18. Cron line (`crontab -e` as root):
+  database, into any PostgreSQL 18. Scheduled by `/etc/cron.d/food-planner-backup`
+  (`apt install cron` if missing), log in `/var/log/food-planner-backup.log`:
 
     ```
-    30 1 * * * /opt/food-planner/scripts/backup-db.sh >> /var/log/food-planner-backup.log 2>&1
+    SHELL=/bin/sh
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    30 1 * * * root /opt/food-planner/scripts/backup-db.sh >> /var/log/food-planner-backup.log 2>&1
     ```
 
 ### Restore the database
