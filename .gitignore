@@ -10,3 +10,6 @@ node_modules
 # Apple Notes export and the import review files: personal data, never commit
 /export.txt
 /import/
+
+# Database dumps on the server (scripts/backup-db.sh)
+/backups/

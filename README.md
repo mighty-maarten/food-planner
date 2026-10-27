@@ -45,6 +45,11 @@ npm run user:local -- set-password --email jane@example.com         # also logs 
 npm run user -- list                                                # without rebuilding (also on the server)
 ```
 
+## Deployment
+
+Production runs with Docker Compose (`Dockerfile`, `docker-compose.yml`) on the home server,
+behind a shared Caddy reverse proxy: see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Importing old menus
 
 The old week menus from Apple Notes become the start of the dish library, with how often each

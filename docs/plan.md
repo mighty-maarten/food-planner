@@ -118,6 +118,17 @@ home.
   PostgreSQL 18, included in the existing vzdump backups (synced to S3).
 - Anything that touches the server (creating LXCs, port forwarding, redeploying img-manager) is
   confirmed with Maarten first, or done by him from a runbook.
+- Decided while preparing milestone 6:
+  - One image (Node 26): the API serves the built client. PostgreSQL 18 in the same Compose
+    project, data in `./data/postgres`; the app's port 3000 is published on the LAN for the proxy.
+  - Proxy: Caddy in Docker on its own LXC (104, `192.168.1.97`); Food Planner on LXC 105
+    (`192.168.1.96`). img-manager's existing certificate is copied to the proxy so the switch
+    needs no new certificate, and its own Caddy keeps running until the port forwards moved
+    (instant rollback).
+  - Backups: vzdump of every LXC (existing, synced to S3) plus a nightly `pg_dump` on the LXC
+    (`scripts/backup-db.sh`, 14 days) for restoring only the database.
+  - On first start the app adds its migration table to the empty database the postgres image
+    creates (it used to assume a database it created itself).
 
 ### Historical data
 
@@ -172,8 +183,10 @@ Wo: Pitta met bloemkool/courgette
 4. **Shop mode** (done): store filter, grouping by category in store order, ticking, offline cache
    and sync queue (IndexedDB), live updates over SSE.
 5. **Import** (done): parse the notes export, cluster duplicates, review file, seed script.
-6. **Infrastructure and deploy**: Dockerfile and Compose for the app, proxy LXC, img-manager
-   refactor, Food Planner LXC, deployment runbook (`DEPLOYMENT.md`), backups.
+6. **Infrastructure and deploy** (prepared, the server steps are Maarten's): Dockerfile and
+   Compose for the app, proxy LXC, img-manager refactor, Food Planner LXC, deployment runbook
+   (`DEPLOYMENT.md`), backups. The cutover runbook is `proxy-cutover-2026-10.md` in the
+   `home-server` repository.
 
 ## Open questions
 
