@@ -2,10 +2,13 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Button, IconField, InputIcon, InputText, ProgressSpinner } from 'primevue';
+import { useConfirm } from 'primevue/useconfirm';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
 import FabButton from '@/components/FabButton.vue';
 import LibraryTabs from '@/components/dishes/LibraryTabs.vue';
+import type { DishListItem } from '@/api/services/types/library';
+import { useToastMessages } from '@/composables/toast';
 import { useDishesStore } from '@/stores/dishes';
 import { buildRoute } from '@/router/utils';
 import { Icons } from '@/types/icons';
@@ -14,6 +17,8 @@ import { TextUtil } from '@/utils/text';
 const { t } = useI18n();
 const router = useRouter();
 const dishesStore = useDishesStore();
+const confirm = useConfirm();
+const { apiErrorToast, successToast } = useToastMessages();
 
 const query = ref('');
 
@@ -27,6 +32,24 @@ const filteredDishes = computed(() =>
 
 const isInitialLoad = computed(() => !dishesStore.isLoaded && dishesStore.isLoading('loadDishes'));
 const loadFailed = computed(() => !dishesStore.isLoaded && dishesStore.hasError('loadDishes'));
+
+function confirmDelete(dish: DishListItem) {
+    confirm.require({
+        header: t('common.delete'),
+        message: t('dishes.delete.confirm', { name: dish.name }),
+        acceptProps: { label: t('common.delete'), severity: 'danger' },
+        rejectProps: { label: t('common.cancel'), severity: 'secondary', outlined: true },
+        accept: () => void deleteDish(dish),
+    });
+}
+
+async function deleteDish(dish: DishListItem) {
+    if (await dishesStore.deleteDish(dish.id)) {
+        successToast(t('dishes.delete.done'), dish.name);
+    } else {
+        apiErrorToast(dishesStore.getError('deleteDish', dish.id));
+    }
+}
 
 onMounted(() => void dishesStore.loadDishes());
 </script>
@@ -77,7 +100,7 @@ onMounted(() => void dishesStore.loadDishes());
                 {{ t('common.no_results', { query }) }}
             </p>
             <ul v-else class="dish-list">
-                <li v-for="dish in filteredDishes" :key="dish.id">
+                <li v-for="dish in filteredDishes" :key="dish.id" class="row">
                     <RouterLink :to="buildRoute('dishes_detail', { dishId: dish.id })" class="dish">
                         <span class="text">
                             <span class="name">{{ dish.name }}</span>
@@ -96,8 +119,18 @@ onMounted(() => void dishesStore.loadDishes());
                             class="recipe"
                             :aria-label="t('dishes.has_recipe')"
                         />
-                        <i :class="Icons.chevronRight" class="chevron" />
                     </RouterLink>
+                    <!-- Apart from the link: the whole row opens the dish, this only deletes -->
+                    <Button
+                        :icon="Icons.trash"
+                        :aria-label="`${t('common.delete')}: ${dish.name}`"
+                        :loading="dishesStore.isLoading('deleteDish', dish.id)"
+                        text
+                        rounded
+                        severity="secondary"
+                        class="delete"
+                        @click="confirmDelete(dish)"
+                    />
                 </li>
             </ul>
 
@@ -144,10 +177,24 @@ onMounted(() => void dishesStore.loadDishes());
             border-bottom: none;
         }
     }
+
+    .row {
+        display: flex;
+        align-items: center;
+        padding-right: $spacing-xs;
+    }
+
+    .delete {
+        flex-shrink: 0;
+        width: $touch-target;
+        height: $touch-target;
+    }
 }
 
 .dish {
     @include list-row;
+    flex: 1;
+    min-width: 0;
     border-bottom: none;
     color: $text-color;
     text-decoration: none;
@@ -175,11 +222,6 @@ onMounted(() => void dishesStore.loadDishes());
 
     .recipe {
         color: $herb-color;
-    }
-
-    .chevron {
-        color: $text-muted-color;
-        font-size: $font-size-sm;
     }
 }
 </style>

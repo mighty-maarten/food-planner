@@ -227,12 +227,14 @@
             "leave_confirm": "Je wijzigingen zijn nog niet opgeslagen. Wil je ze weggooien?",
             "leave": "Weggooien",
             "stay": "Verder bewerken",
-            "back_to_plan": "Terug naar weekmenu"
+            "back_to_plan": "Terug naar weekmenu",
+            "title_copy": "Gerecht kopiëren"
         },
         "delete": {
             "confirm": "Wil je “{name}” verwijderen?",
             "done": "Gerecht verwijderd"
-        }
+        },
+        "copy": "Kopiëren"
     },
     "ingredients": {
         "search_placeholder": "Zoek een ingrediënt",

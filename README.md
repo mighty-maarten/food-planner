@@ -73,6 +73,27 @@ The export is one line per day (`Do: risotto met pompoen`): `/` or an empty day 
 eating out and the like go under `[skip]`, URLs become the recipe's source, and spellings of the
 same dish are grouped (word order, filler words and small typos don't matter).
 
+## Cleaning up the library
+
+`import/cleanup.txt` (git-ignored, like the import) holds a reviewed cleanup of the library:
+the category of every ingredient, spellings and synonyms merged into one ingredient
+(`Runds`, `Steak` → `Biefstuk`), non-ingredients removed, dishes merged (same ingredients in any
+order, synonyms included) and the ingredients of dishes. It is applied by name, in one
+transaction, and running it again changes nothing:
+
+```sh
+cd packages/api
+npm run library-cleanup:local -- apply --dry-run
+npm run library-cleanup:local -- apply
+
+# In production (see DEPLOYMENT.md for copying the file into the container)
+docker compose exec app npm run library-cleanup -- apply --file /tmp/cleanup.txt --dry-run
+```
+
+Merging keeps what uses the merged items: dishes, shopping lists (one line, with the days and
+notes of both), default stores and plans. Something that is not an ingredient or not a dish is
+kept when a shopping list or a plan still uses it; the report says so.
+
 ## Configuration
 
 All API configuration comes from environment variables, defined in one place:

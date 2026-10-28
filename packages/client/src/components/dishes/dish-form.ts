@@ -22,6 +22,20 @@ export function emptyLine(): DishFormLine {
     return { key: nextKey++, name: '', amount: null, unit: '' };
 }
 
+/** "Risotto (kopie)", or "Risotto (kopie 2)" when that name is taken too */
+export function copyName(name: string, existingNames: string[]): string {
+    const taken = new Set(existingNames.map((n) => n.toLowerCase()));
+    for (let number = 1; ; number++) {
+        const candidate = number === 1 ? `${name} (kopie)` : `${name} (kopie ${String(number)})`;
+        if (!taken.has(candidate.toLowerCase())) return candidate;
+    }
+}
+
+/** A new dish filled in from an existing one: same ingredients, recipe and servings */
+export function toCopyState(dish: Dish, existingNames: string[]): DishFormState {
+    return { ...toFormState(dish), name: copyName(dish.name, existingNames) };
+}
+
 export function toFormState(dish?: Dish): DishFormState {
     if (!dish) {
         return { name: '', servings: null, sourceUrl: '', recipe: '', lines: [emptyLine()] };
