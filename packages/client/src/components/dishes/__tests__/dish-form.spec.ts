@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+    copyName,
+    toCopyState,
     duplicateLineKeys,
     isValidUrl,
     toFormState,
@@ -75,6 +77,41 @@ describe('dish form', () => {
             ingredients: [],
         });
         expect(state.lines).toHaveLength(1);
+    });
+
+    it('names a copy after the dish, with a number when that name is taken', () => {
+        expect(copyName('Risotto', ['Risotto'])).toBe('Risotto (kopie)');
+        expect(copyName('Risotto', ['Risotto', 'risotto (KOPIE)'])).toBe('Risotto (kopie 2)');
+    });
+
+    it('copies the ingredients, recipe and servings of a dish', () => {
+        const state = toCopyState(
+            {
+                id: 'dish-1',
+                name: 'Risotto',
+                recipe: '1. Fruit de ui.',
+                sourceUrl: 'https://example.com/risotto',
+                servings: 4,
+                ingredients: [
+                    {
+                        ingredientId: 'i-1',
+                        name: 'Rijst',
+                        categoryId: null,
+                        amount: 300,
+                        unit: 'g',
+                    },
+                ],
+            },
+            ['Risotto'],
+        );
+
+        expect(state).toMatchObject({
+            name: 'Risotto (kopie)',
+            recipe: '1. Fruit de ui.',
+            sourceUrl: 'https://example.com/risotto',
+            servings: 4,
+            lines: [expect.objectContaining({ name: 'Rijst', amount: 300, unit: 'g' })],
+        });
     });
 
     it('marks later lines with the same ingredient as duplicates', () => {

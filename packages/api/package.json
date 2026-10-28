@@ -29,7 +29,9 @@
         "format:check": "prettier --check .",
         "lint:fix": "eslint . --fix",
         "import": "node dist/import/import-cli.js",
-        "import:local": "npm run build && npm run import --"
+        "import:local": "npm run build && npm run import --",
+        "library-cleanup": "node dist/library-cleanup/cleanup-cli.js",
+        "library-cleanup:local": "npm run build && npm run library-cleanup --"
     },
     "dependencies": {
         "@nestjs/common": "^12.2.0",

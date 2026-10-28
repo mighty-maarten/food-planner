@@ -11,6 +11,7 @@ export const Icons = {
     plus: 'pi pi-plus',
     pencil: 'pi pi-pencil',
     trash: 'pi pi-trash',
+    copy: 'pi pi-copy',
     search: 'pi pi-search',
     arrowLeft: 'pi pi-arrow-left',
     arrowUp: 'pi pi-arrow-up',

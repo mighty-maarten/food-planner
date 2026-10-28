@@ -20,6 +20,7 @@ import {
     duplicateLineKeys,
     emptyLine,
     isValidUrl,
+    toCopyState,
     toFormState,
     toRequest,
 } from '@/components/dishes/dish-form';
@@ -93,8 +94,30 @@ function setForm(state: DishFormState) {
     savedSnapshot.value = JSON.stringify(toRequest(state));
 }
 
+// /gerechten/nieuw?kopie=<dishId>: a new dish filled in from an existing one
+const copyOf = computed(() =>
+    !props.dishId && typeof route.query.kopie === 'string' ? route.query.kopie : undefined,
+);
+
 onMounted(async () => {
     void catalogueStore.load();
+    if (copyOf.value) {
+        const [source] = await Promise.all([
+            dishesStore.details.get(copyOf.value) ?? dishesStore.loadDish(copyOf.value),
+            dishesStore.isLoaded ? undefined : dishesStore.loadDishes(),
+        ]);
+        // Compared with an empty form, so leaving without saving asks first
+        setForm(toFormState());
+        if (source) {
+            form.value = toCopyState(
+                source,
+                dishesStore.dishes.map((dish) => dish.name),
+            );
+        } else {
+            apiErrorToast(dishesStore.getError('loadDish', copyOf.value));
+        }
+        return;
+    }
     if (!props.dishId) {
         setForm(toFormState());
         return;
@@ -185,7 +208,13 @@ onBeforeRouteLeave(() => {
 <template>
     <main class="page">
         <PageHeader
-            :title="isNew ? t('dishes.form.title_new') : t('dishes.form.title_edit')"
+            :title="
+                copyOf
+                    ? t('dishes.form.title_copy')
+                    : isNew
+                      ? t('dishes.form.title_new')
+                      : t('dishes.form.title_edit')
+            "
             :back="backRoute"
         />
 

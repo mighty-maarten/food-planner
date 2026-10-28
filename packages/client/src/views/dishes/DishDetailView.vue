@@ -73,6 +73,15 @@ async function deleteDish(name: string) {
                     size="large"
                     @click="router.push(buildRoute('dishes_edit', { dishId }))"
                 />
+                <Button
+                    v-tooltip.bottom="t('dishes.copy')"
+                    :icon="Icons.copy"
+                    :aria-label="t('dishes.copy')"
+                    text
+                    rounded
+                    size="large"
+                    @click="router.push({ ...buildRoute('dishes_new'), query: { kopie: dishId } })"
+                />
             </template>
         </PageHeader>
 
