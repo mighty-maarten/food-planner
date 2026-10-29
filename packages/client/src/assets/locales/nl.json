@@ -113,7 +113,8 @@
             "removed": "Van de lijst gehaald",
             "store": "Winkel",
             "store_default": "Standaard ({stores})",
-            "store_any": "Elke winkel"
+            "store_any": "Elke winkel",
+            "store_none": "geen winkel"
         },
         "carry_over": {
             "banner": "{count} item van het vorige weekmenu niet afgevinkt | {count} items van het vorige weekmenu niet afgevinkt",
@@ -173,7 +174,8 @@
             "title": "Waar koop je {name}?",
             "default": "Standaard ({stores})",
             "any": "Elke winkel",
-            "moved": "{name} → {store}"
+            "moved": "{name} → {store}",
+            "none": "geen winkel"
         },
         "filter": "Filter op winkel"
     },
@@ -255,13 +257,16 @@
             "stores": "Meestal gekocht bij",
             "stores_hint": "Geen winkel gekozen: het staat bij elke winkel op de lijst.",
             "no_stores": "Nog geen winkels. Voeg ze toe onder Winkels.",
-            "conflict": "Er bestaat al een ingrediënt met deze naam."
+            "conflict": "Er bestaat al een ingrediënt met deze naam.",
+            "always_on_list": "Altijd op de lijst",
+            "always_on_list_hint": "Staat meteen op de boodschappenlijst van elk nieuw weekmenu, bv. brood of melk."
         },
         "delete": {
             "confirm": "Wil je “{name}” verwijderen?",
             "in_use": "“{name}” wordt nog gebruikt in: {dishes}. Haal het daar eerst weg.",
             "done": "Ingrediënt verwijderd"
-        }
+        },
+        "always_on_list": "Altijd op de lijst"
     },
     "categories": {
         "intro": "De volgorde hier is de standaardvolgorde. Per winkel kies je de volgorde van je route door de winkel.",

@@ -63,7 +63,7 @@ const itemMenuItems = computed<MenuItem[]>(() => {
                     label: t('shop.item_store.default', {
                         stores:
                             storeNames(item.defaultStoreIds, shop.stores) ??
-                            t('shop.item_store.any').toLowerCase(),
+                            t('shop.item_store.none'),
                     }),
                     icon: item.storeOverride ? undefined : Icons.check,
                     command: choose(false, null),
@@ -413,8 +413,8 @@ useEventListener(document, 'visibilitychange', () => {
         &.offline {
             padding: $spacing-xxs $spacing-sm;
             border-radius: $radius-full;
-            background: $saffron-color;
-            color: var(--p-surface-950);
+            background: $saffron-surface-color;
+            color: $on-saffron-surface-color;
         }
 
         .dot {
@@ -576,8 +576,8 @@ useEventListener(document, 'visibilitychange', () => {
         font-weight: $font-weight-medium;
 
         &.soon {
-            background: $saffron-color;
-            color: var(--p-surface-950);
+            background: $saffron-surface-color;
+            color: $on-saffron-surface-color;
         }
     }
 }

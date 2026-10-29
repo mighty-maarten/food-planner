@@ -108,17 +108,26 @@ export class PlansService {
         return assemblePlan({ plan, days, dishIngredients, items, sources });
     }
 
+    /** A new plan starts with the ingredients that are always needed on its shopping list */
     public async createPlan(request: PlanRequest, userId: string): Promise<Plan> {
         await this.assertValidRange(request);
-        const plan = await this.planRepository.save(
-            this.planRepository.create({
-                startDate: request.startDate,
-                endDate: request.endDate,
-                createdById: userId,
-            }),
-        );
-        this.logger.log('Plan created', { planId: plan.id });
-        return this.getPlan(plan.id);
+        const planId = await this.planRepository.manager.transaction(async (manager) => {
+            const plan = await manager.save(
+                manager.create(PlanEntity, {
+                    startDate: request.startDate,
+                    endDate: request.endDate,
+                    createdById: userId,
+                }),
+            );
+            await manager.query(
+                `INSERT INTO list_items (plan_id, ingredient_id, manual, added_by_id)
+                 SELECT $1, id, TRUE, $2 FROM ingredients WHERE always_on_list`,
+                [plan.id, userId],
+            );
+            return plan.id;
+        });
+        this.logger.log('Plan created', { planId });
+        return this.getPlan(planId);
     }
 
     /** Changes the dates; days that fall outside the new range lose their dish */

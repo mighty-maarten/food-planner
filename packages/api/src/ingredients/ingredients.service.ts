@@ -142,6 +142,8 @@ export class IngredientsService {
             name: request.name,
             categoryId: request.categoryId ?? null,
             stores: request.storeIds.map((id) => ({ id })),
+            // Left out (e.g. by an installed app that hasn't updated yet): not changed
+            ...(request.alwaysOnList !== undefined && { alwaysOnList: request.alwaysOnList }),
         };
     }
 
@@ -152,6 +154,7 @@ export class IngredientsService {
             categoryId: ingredient.categoryId,
             storeIds: ingredient.stores.map((store) => store.id),
             dishCount,
+            alwaysOnList: ingredient.alwaysOnList,
         });
     }
 }

@@ -564,11 +564,15 @@ export interface components {
             storeIds: string[];
             /** @description Number of dishes using this ingredient. */
             dishCount: number;
+            /** @description Always needed: a new plan starts with it on its shopping list. */
+            alwaysOnList: boolean;
         };
         IngredientRequest: {
             name: string;
             categoryId?: string | null;
             storeIds: string[];
+            /** @description Always needed: a new plan starts with it. Left out: false for a new ingredient, unchanged on an update. */
+            alwaysOnList?: boolean;
         };
         DishListItem: {
             id: string;

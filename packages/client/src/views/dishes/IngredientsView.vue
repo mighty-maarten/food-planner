@@ -104,7 +104,16 @@ onMounted(() => void catalogueStore.load(true));
                     <li v-for="ingredient in group.items" :key="ingredient.id">
                         <button type="button" class="ingredient" @click="open(ingredient)">
                             <span class="text">
-                                <span class="name">{{ ingredient.name }}</span>
+                                <span class="name">
+                                    {{ ingredient.name }}
+                                    <i
+                                        v-if="ingredient.alwaysOnList"
+                                        v-tooltip.top="t('ingredients.always_on_list')"
+                                        :class="Icons.pin"
+                                        :aria-label="t('ingredients.always_on_list')"
+                                        class="always"
+                                    />
+                                </span>
                                 <span class="usage">
                                     {{
                                         ingredient.dishCount
@@ -199,6 +208,12 @@ onMounted(() => void catalogueStore.load(true));
 
     .name {
         font-weight: $font-weight-medium;
+    }
+
+    .always {
+        margin-left: $spacing-xs;
+        color: $primary-color;
+        font-size: $font-size-sm;
     }
 
     .usage {

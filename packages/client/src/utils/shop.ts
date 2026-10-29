@@ -17,9 +17,14 @@ export interface ShopList {
     checked: ListItem[];
 }
 
-/** Items for a store: its own items plus those without a store. All items without a store. */
+/**
+ * Items for a store: the ones bought there, plus the ones explicitly set to "any store" on this
+ * list. Items without a store only show under all stores.
+ */
 export function isForStore(item: ListItem, storeId: string | null): boolean {
-    return !storeId || item.storeIds.length === 0 || item.storeIds.includes(storeId);
+    if (!storeId) return true;
+    if (item.storeOverride && item.storeIds.length === 0) return true;
+    return item.storeIds.includes(storeId);
 }
 
 export function buildShopList(

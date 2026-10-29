@@ -41,10 +41,13 @@ const stores = [
 ];
 
 const items = [
-    item('Ui', { categoryId: 'fruit' }),
+    item('Ui', { categoryId: 'fruit', storeIds: ['colruyt'] }),
     item('Erwten', { categoryId: 'frozen', storeIds: ['colruyt'] }),
     item('Yoghurt', { categoryId: 'dairy', storeIds: ['delhaize'] }),
+    // No store linked
     item('Brood'),
+    // Set to "any store" on this list
+    item('Zout', { storeOverride: true, storeIds: [] }),
 ];
 
 describe('buildShopList', () => {
@@ -54,15 +57,22 @@ describe('buildShopList', () => {
         expect(list.groups.map((g) => [g.categoryId, g.items.map((i) => i.name)])).toEqual([
             ['frozen', ['Erwten']],
             ['fruit', ['Ui']],
-            [null, ['Brood']],
+            [null, ['Zout']],
         ]);
     });
 
-    it("shows the store's items and items without a store", () => {
+    it("shows only the store's items and the ones for any store, not items without a store", () => {
         const names = buildShopList(plan(items), 'delhaize', categories, stores).groups.flatMap(
             (g) => g.items.map((i) => i.name),
         );
-        expect(names).toEqual(['Ui', 'Yoghurt', 'Brood']);
+        expect(names).toEqual(['Yoghurt', 'Zout']);
+    });
+
+    it('shows items without a store under all stores', () => {
+        const names = buildShopList(plan(items), null, categories, stores).groups.flatMap((g) =>
+            g.items.map((i) => i.name),
+        );
+        expect(names).toContain('Brood');
     });
 
     it('shows everything in the default order without a store', () => {

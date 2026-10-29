@@ -9,6 +9,9 @@
     --app-background: var(--p-surface-50);
     --app-herb: #5e7a3a;
     --app-saffron: #b9751a;
+    // Badges and banners: a saffron surface with readable text on it ("needed soon", offline)
+    --app-saffron-surface: #f6dfb5;
+    --app-on-saffron-surface: #6b4209;
     color-scheme: light;
 }
 
@@ -17,6 +20,8 @@
         --app-background: var(--p-surface-950);
         --app-herb: #9cbf6e;
         --app-saffron: #f0b860;
+        --app-saffron-surface: #f0b860;
+        --app-on-saffron-surface: var(--p-surface-950);
         color-scheme: dark;
     }
 }
@@ -71,4 +76,11 @@ h3 {
 // Make PrimeVue ConfirmDialog respect newlines
 .p-confirmdialog-message {
     white-space: pre-line;
+}
+
+// PrimeVue toasts are 25rem wide, wider than small phones (iPhone 12 mini: 375px): keep a margin
+// on both sides, and stay below the notch
+.p-toast.p-toast-top-center {
+    width: min(25rem, calc(100vw - 2 * #{$spacing-md}));
+    top: calc(env(safe-area-inset-top) + #{$spacing-md});
 }

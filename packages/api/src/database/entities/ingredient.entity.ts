@@ -10,6 +10,10 @@ export class IngredientEntity extends BaseEntity {
     @Column({ type: 'uuid', nullable: true })
     categoryId!: string | null;
 
+    /** Always needed: a new plan starts with it on its shopping list */
+    @Column({ type: 'boolean', default: false })
+    alwaysOnList!: boolean;
+
     /** Where the ingredient is usually bought */
     @ManyToMany(() => StoreEntity)
     @JoinTable({
