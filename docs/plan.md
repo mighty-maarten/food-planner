@@ -31,6 +31,8 @@ home.
   person, store B for the other).
 - Categories (Groenten & fruit, Zuivel, Huishouden, ...) with a separate order per store, matching
   the route through that store.
+- Dishes have free tags (pasta, soep, vis, ...), stored lowercase. The dish list and the dish
+  picker filter on one tag at a time; the form offers the tags in use plus a new one.
 - Decided while building milestone 2:
   - Names of categories, stores, ingredients and dishes are unique, case-insensitive (409
     `CONFLICT`).
@@ -59,6 +61,8 @@ home.
 - Ingredients that are always needed (bread, milk) can be marked "Altijd op de lijst": a new plan
   starts with them on its list as free items. Existing plans don't change; removing one from a
   list is for that week only.
+- A planned dish can be moved to another day: to an empty day it moves, to a planned day the two
+  swap. The picked ingredients go along, so the derived "needed by" follows.
 - Decided while building milestone 3:
   - Plans don't overlap (409 `CONFLICT`), so "the plan of today" and "the previous plan" are
     unambiguous. A plan lasts at most 31 days. The current plan is the one with today in it, else
@@ -90,7 +94,10 @@ home.
   — the week picker on Weekmenu, the library tabs on Gerechten, back + title on detail pages. In
   shop mode it holds the count, the store filter and the live/offline status, with the progress
   as its bottom edge, and small category labels, so the list starts right at the top.
-- "Needed by" is shown on every item.
+- "Needed by" is shown on every item, with the amounts the planned dishes need added up per unit
+  ("500 g") and "voor 2 gerechten" when more than one dish needs it.
+- Ticking an item into the cart shows an undo bar above the navigation for 5 seconds.
+- The screen stays on in shop mode (Screen Wake Lock, where the browser supports it).
 - Works offline: the active list is cached on the device and ticks made offline are synced when the
   connection is back. Two people can shop at the same time (e.g. in two stores): ticks show up live
   for the other (SSE). Conflicting changes: the last tick wins.

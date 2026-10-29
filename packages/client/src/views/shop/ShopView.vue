@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Button, Menu, ProgressSpinner } from 'primevue';
 import type { MenuItem } from 'primevue/menuitem';
-import { useEventListener } from '@vueuse/core';
+import { useEventListener, useWakeLock } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
 import TopBar from '@/components/TopBar.vue';
@@ -13,7 +13,7 @@ import { useShopStore } from '@/stores/shop';
 import { buildRoute } from '@/router/utils';
 import { Icons } from '@/types/icons';
 import { DateUtil } from '@/utils/date';
-import { buildShopList, isForStore, isNeededSoon, storeNames } from '@/utils/shop';
+import { buildShopList, isForStore, isNeededSoon, storeNames, totalAmount } from '@/utils/shop';
 import { useToastMessages } from '@/composables/toast';
 
 const { t } = useI18n();
@@ -122,15 +122,56 @@ const storeMenuItems = computed<MenuItem[]>(() => [
     },
 ]);
 
+/** "500 g · voor 2 gerechten": what the planned dishes need */
+function quantity(item: ListItem): string {
+    const dishes = new Set(item.sources.map((source) => source.dishId)).size;
+    return [totalAmount(item), dishes > 1 ? t('shop.for_dishes', dishes) : '']
+        .filter(Boolean)
+        .join(' · ');
+}
+
+// Undo the last tick into the cart: the item moves out of sight, a mis-tap is easy with full hands
+const UNDO_MS = 5000;
+const undoItem = ref<ListItem | null>(null);
+let undoTimer: ReturnType<typeof setTimeout> | undefined;
+
+function showUndo(item: ListItem | null) {
+    clearTimeout(undoTimer);
+    undoItem.value = item;
+    if (item) undoTimer = setTimeout(() => (undoItem.value = null), UNDO_MS);
+}
+
+function undo() {
+    const current = shop.plan?.items.find((item) => item.id === undoItem.value?.id);
+    showUndo(null);
+    if (current?.checkedAt) void shop.toggle(current);
+}
+
+// Keep the screen on while shopping, so the list is there when you look at the phone again
+const wakeLock = useWakeLock();
+function keepScreenOn() {
+    if (wakeLock.isSupported.value && !wakeLock.isActive.value) {
+        // Refused e.g. in battery saver mode: the screen just locks as usual
+        wakeLock.request('screen').catch(() => undefined);
+    }
+}
+
 function tick(item: ListItem) {
     // A short buzz confirms the tick without looking (Android; iOS Safari has no vibrate)
     if ('vibrate' in navigator) navigator.vibrate(10);
+    // Some browsers only grant the wake lock after a tap
+    keepScreenOn();
+    showUndo(item.checkedAt ? null : item);
     void shop.toggle(item);
 }
 
-onMounted(() => void shop.start());
+onMounted(() => {
+    void shop.start();
+    keepScreenOn();
+});
 onUnmounted(() => {
     shop.stop();
+    clearTimeout(undoTimer);
 });
 
 // Sync as soon as the connection is back, and catch up when the app returns to the foreground
@@ -267,11 +308,16 @@ useEventListener(document, 'visibilitychange', () => {
                                 <span class="box" />
                                 <span class="text">
                                     <span class="name">{{ item.name }}</span>
-                                    <span v-if="item.note || storeTag(item)" class="note">
+                                    <span
+                                        v-if="item.note || storeTag(item) || quantity(item)"
+                                        class="note"
+                                    >
                                         <span v-if="storeTag(item)" class="store-tag">
                                             <i :class="Icons.shop" />{{ storeTag(item) }}
                                         </span>
-                                        {{ item.note }}
+                                        {{
+                                            [quantity(item), item.note].filter(Boolean).join(' · ')
+                                        }}
                                     </span>
                                 </span>
                                 <i
@@ -337,6 +383,14 @@ useEventListener(document, 'visibilitychange', () => {
                 </section>
             </template>
         </template>
+        <Transition name="undo">
+            <div v-if="undoItem" class="undo-bar" role="status">
+                <span class="text">{{ t('shop.undo.checked', { name: undoItem.name }) }}</span>
+                <button type="button" class="undo" @click="undo">
+                    <i :class="Icons.undo" />{{ t('shop.undo.action') }}
+                </button>
+            </div>
+        </Transition>
     </main>
 </template>
 
@@ -599,5 +653,67 @@ useEventListener(document, 'visibilitychange', () => {
             text-decoration: line-through;
         }
     }
+}
+
+// Above the bottom navigation, in reach of the thumb
+.undo-bar {
+    position: fixed;
+    inset: auto $spacing-md calc($bottom-nav-height + env(safe-area-inset-bottom) + $spacing-sm);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    max-width: 30rem;
+    margin: 0 auto;
+    padding: $spacing-xs $spacing-xs $spacing-xs $spacing-md;
+    border-radius: $radius-lg;
+    background: var(--p-surface-900);
+    color: var(--p-surface-0);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
+
+    @media (prefers-color-scheme: dark) {
+        background: var(--p-surface-100);
+        color: var(--p-surface-900);
+    }
+
+    @include minb($breakpoint-lg) {
+        bottom: $spacing-lg;
+    }
+
+    .text {
+        flex: 1;
+        min-width: 0;
+        font-size: $font-size-sm;
+        @include ellipsis;
+    }
+
+    .undo {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacing-xs;
+        flex-shrink: 0;
+        min-height: $touch-target;
+        padding: 0 $spacing-sm-md;
+        border: none;
+        border-radius: $radius-md;
+        background: none;
+        color: inherit;
+        font: inherit;
+        font-weight: $font-weight-semibold;
+        cursor: pointer;
+    }
+}
+
+.undo-enter-active,
+.undo-leave-active {
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.undo-enter-from,
+.undo-leave-to {
+    opacity: 0;
+    transform: translateY($spacing-sm);
 }
 </style>

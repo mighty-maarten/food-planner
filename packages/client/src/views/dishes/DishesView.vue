@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
 import FabButton from '@/components/FabButton.vue';
 import LibraryTabs from '@/components/dishes/LibraryTabs.vue';
+import TagFilter from '@/components/dishes/TagFilter.vue';
 import type { DishListItem } from '@/api/services/types/library';
 import { useToastMessages } from '@/composables/toast';
 import { useDishesStore } from '@/stores/dishes';
@@ -21,13 +22,14 @@ const confirm = useConfirm();
 const { apiErrorToast, successToast } = useToastMessages();
 
 const query = ref('');
+const tag = ref<string | null>(null);
 
 const filteredDishes = computed(() =>
-    query.value.trim()
-        ? dishesStore.dishes.filter((dish) =>
-              TextUtil.matches(query.value, dish.name, ...dish.ingredientNames),
-          )
-        : dishesStore.dishes,
+    dishesStore.dishes.filter(
+        (dish) =>
+            (!tag.value || dish.tags.includes(tag.value)) &&
+            TextUtil.matches(query.value, dish.name, ...dish.ingredientNames),
+    ),
 );
 
 const isInitialLoad = computed(() => !dishesStore.isLoaded && dishesStore.isLoading('loadDishes'));
@@ -94,10 +96,12 @@ onMounted(() => void dishesStore.loadDishes());
                 />
             </IconField>
 
+            <TagFilter v-model="tag" :tags="dishesStore.tags" class="tags" />
+
             <p class="count">{{ t('dishes.count', filteredDishes.length) }}</p>
 
             <p v-if="filteredDishes.length === 0" class="no-results">
-                {{ t('common.no_results', { query }) }}
+                {{ t('common.no_results', { query: query.trim() || tag }) }}
             </p>
             <ul v-else class="dish-list">
                 <li v-for="dish in filteredDishes" :key="dish.id" class="row">
@@ -158,6 +162,10 @@ onMounted(() => void dishesStore.loadDishes());
 
 .search :deep(.p-inputtext) {
     min-height: $touch-target;
+}
+
+.tags {
+    margin-top: $spacing-sm;
 }
 
 .count,

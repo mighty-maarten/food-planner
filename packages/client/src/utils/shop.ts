@@ -1,8 +1,25 @@
 import type { Category, Store } from '@/api/services/types/library';
 import type { ListItem, Plan } from '@/api/services/types/plans';
 import type { PendingStoreChange, PendingTick } from '@/offline/shop-cache';
+import { formatAmount } from './amount';
 import { DateUtil } from './date';
 import { TextUtil } from './text';
+
+/**
+ * The amounts the planned dishes need, added up per unit: "500 g", "2 + 300 g". Empty when no
+ * dish has an amount for it.
+ */
+export function totalAmount(item: ListItem): string {
+    const byUnit = new Map<string, { unit: string | null; amount: number }>();
+    for (const source of item.sources) {
+        if (source.amount === null) continue;
+        const key = source.unit?.trim().toLowerCase() ?? '';
+        const total = byUnit.get(key);
+        if (total) total.amount += source.amount;
+        else byUnit.set(key, { unit: source.unit, amount: source.amount });
+    }
+    return [...byUnit.values()].map(({ amount, unit }) => formatAmount(amount, unit)).join(' + ');
+}
 
 export interface ShopGroup {
     /** null: items without (a known) category */

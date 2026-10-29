@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { Dialog, IconField, InputIcon, InputText } from 'primevue';
 import { useI18n } from 'vue-i18n';
+import TagFilter from '@/components/dishes/TagFilter.vue';
 import { useIsPhone, useSheetDialog } from '@/composables/sheet-dialog';
 import { useToastMessages } from '@/composables/toast';
 import { useVisualViewport } from '@/composables/visual-viewport';
@@ -43,17 +44,19 @@ const { apiErrorToast } = useToastMessages();
 const dishesStore = useDishesStore();
 
 const query = ref('');
+const tag = ref<string | null>(null);
 
 // Favourites first (planned most, also before the app); search results by name
-const matches = computed(() =>
-    query.value.trim()
-        ? dishesStore.dishes.filter((dish) =>
-              TextUtil.matches(query.value, dish.name, ...dish.ingredientNames),
-          )
-        : [...dishesStore.dishes].sort(
+const matches = computed(() => {
+    const ofTag = tag.value
+        ? dishesStore.dishes.filter((dish) => tag.value && dish.tags.includes(tag.value))
+        : dishesStore.dishes;
+    return query.value.trim()
+        ? ofTag.filter((dish) => TextUtil.matches(query.value, dish.name, ...dish.ingredientNames))
+        : [...ofTag].sort(
               (a, b) => b.timesPlanned - a.timesPlanned || TextUtil.compare(a.name, b.name),
-          ),
-);
+          );
+});
 const canCreate = computed(() => {
     const name = query.value.trim().toLowerCase();
     return !!name && !dishesStore.dishes.some((dish) => dish.name.toLowerCase() === name);
@@ -66,7 +69,10 @@ const dayLabel = computed(() =>
 );
 
 watch(visible, (open) => {
-    if (open) query.value = '';
+    if (open) {
+        query.value = '';
+        tag.value = null;
+    }
 });
 
 onMounted(() => {
@@ -124,6 +130,8 @@ async function create() {
                 @keydown.enter.prevent="onEnter"
             />
         </IconField>
+
+        <TagFilter v-model="tag" :tags="dishesStore.tags" class="tags" />
 
         <ul
             class="options"
@@ -195,6 +203,11 @@ async function create() {
 </template>
 
 <style scoped lang="scss">
+.tags {
+    flex-shrink: 0;
+    margin-top: $spacing-sm;
+}
+
 .options {
     display: flex;
     flex-direction: column;

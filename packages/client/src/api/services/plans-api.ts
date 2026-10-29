@@ -43,6 +43,11 @@ export class PlansApi {
         return HttpClient.put<Plan>(ApiUrls.day(planId, date), { dishId });
     }
 
+    /** Swaps the dishes (and picked ingredients) of two days; to an empty day it is a move */
+    public static async swapDays(planId: string, date: string, otherDate: string) {
+        return HttpClient.post<Plan>(`${ApiUrls.day(planId, date)}/swap`, { date: otherDate });
+    }
+
     public static async setDayIngredients(planId: string, date: string, ingredientIds: string[]) {
         return HttpClient.put<Plan>(`${ApiUrls.day(planId, date)}/ingredients`, { ingredientIds });
     }

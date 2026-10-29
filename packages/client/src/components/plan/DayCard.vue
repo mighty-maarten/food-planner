@@ -12,7 +12,7 @@ import { formatAmount } from '@/utils/amount';
 import { DateUtil } from '@/utils/date';
 
 const props = defineProps<{ planId: string; day: PlanDay; isToday: boolean }>();
-const emit = defineEmits<{ chooseDish: [] }>();
+const emit = defineEmits<{ chooseDish: []; move: [] }>();
 
 const { t } = useI18n();
 const route = useRoute();
@@ -70,6 +70,15 @@ function toggle(ingredientId: string) {
                 >
                     {{ day.dish.name }}
                     <i :class="Icons.pencil" />
+                </button>
+                <button
+                    v-tooltip.left="t('plan.day.move')"
+                    type="button"
+                    class="open"
+                    :aria-label="t('plan.day.move')"
+                    @click="emit('move')"
+                >
+                    <i :class="Icons.move" />
                 </button>
                 <RouterLink
                     v-tooltip.left="t('plan.day.open_dish')"
@@ -232,8 +241,12 @@ header {
         flex-shrink: 0;
         width: $touch-target;
         height: $touch-target;
+        padding: 0;
+        border: none;
         border-radius: $radius-full;
+        background: none;
         color: $text-muted-color;
+        cursor: pointer;
 
         &:hover {
             background: $hover-color;

@@ -13,6 +13,7 @@ export interface DishFormState {
     servings: number | null;
     sourceUrl: string;
     recipe: string;
+    tags: string[];
     lines: DishFormLine[];
 }
 
@@ -31,20 +32,28 @@ export function copyName(name: string, existingNames: string[]): string {
     }
 }
 
-/** A new dish filled in from an existing one: same ingredients, recipe and servings */
+/** A new dish filled in from an existing one: same ingredients, recipe, servings and tags */
 export function toCopyState(dish: Dish, existingNames: string[]): DishFormState {
     return { ...toFormState(dish), name: copyName(dish.name, existingNames) };
 }
 
 export function toFormState(dish?: Dish): DishFormState {
     if (!dish) {
-        return { name: '', servings: null, sourceUrl: '', recipe: '', lines: [emptyLine()] };
+        return {
+            name: '',
+            servings: null,
+            sourceUrl: '',
+            recipe: '',
+            tags: [],
+            lines: [emptyLine()],
+        };
     }
     return {
         name: dish.name,
         servings: dish.servings,
         sourceUrl: dish.sourceUrl ?? '',
         recipe: dish.recipe ?? '',
+        tags: [...dish.tags],
         lines: dish.ingredients.length
             ? dish.ingredients.map((line) => ({
                   key: nextKey++,
@@ -64,6 +73,7 @@ export function toRequest(state: DishFormState): DishRequest {
         servings: state.servings,
         sourceUrl: state.sourceUrl.trim() || null,
         recipe: state.recipe.trim() || null,
+        tags: state.tags,
         ingredients: state.lines
             .filter((line) => line.name.trim())
             .map((line) => ({

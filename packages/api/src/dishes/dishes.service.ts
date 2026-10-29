@@ -6,7 +6,7 @@ import { DatabaseHelper } from '../database/database.helper.js';
 import { DishIngredientEntity } from '../database/entities/dish-ingredient.entity.js';
 import { DishEntity } from '../database/entities/dish.entity.js';
 import { IngredientsService } from '../ingredients/ingredients.service.js';
-import { Dish, DishIngredient, DishListItem, type DishRequest } from './types.js';
+import { Dish, DishIngredient, DishListItem, normalizeTags, type DishRequest } from './types.js';
 
 @Injectable()
 export class DishesService {
@@ -21,7 +21,7 @@ export class DishesService {
     /** All dishes sorted by name, without the recipe texts */
     public async getDishes(): Promise<DishListItem[]> {
         const rows: DishListItem[] = await this.dishRepository.query(
-            `SELECT d.id, d.name,
+            `SELECT d.id, d.name, d.tags,
                     (d.recipe IS NOT NULL OR d.source_url IS NOT NULL) AS "hasRecipe",
                     COALESCE(
                         array_agg(i.name ORDER BY di.position) FILTER (WHERE i.id IS NOT NULL),
@@ -159,6 +159,7 @@ export class DishesService {
             recipe: request.recipe ?? null,
             sourceUrl: request.sourceUrl ?? null,
             servings: request.servings ?? null,
+            ...(request.tags !== undefined && { tags: normalizeTags(request.tags) }),
         };
     }
 
@@ -169,6 +170,7 @@ export class DishesService {
             recipe: dish.recipe,
             sourceUrl: dish.sourceUrl,
             servings: dish.servings,
+            tags: dish.tags,
             ingredients: dish.ingredients.map(
                 (line) =>
                     new DishIngredient({

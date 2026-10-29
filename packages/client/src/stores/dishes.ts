@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useStoreCreationUtils } from './util';
 import { useCatalogueStore } from './catalogue';
 import { DishesApi } from '@/api/services/dishes-api';
@@ -13,6 +13,7 @@ function toListItem(dish: Dish, timesPlanned: number): DishListItem {
         id: dish.id,
         name: dish.name,
         ingredientNames: dish.ingredients.map((line) => line.name),
+        tags: dish.tags,
         hasRecipe: !!dish.recipe || !!dish.sourceUrl,
         timesPlanned,
     };
@@ -27,6 +28,12 @@ export const useDishesStore = defineStore('dishes', () => {
     const isLoaded = ref(false);
     /** Dishes opened in this session, by id */
     const details = ref(new Map<string, Dish>());
+    /** Every tag in use, sorted */
+    const tags = computed(() =>
+        [...new Set(dishes.value.flatMap((dish) => dish.tags))].sort((a, b) =>
+            TextUtil.compare(a, b),
+        ),
+    );
 
     function upsertListItem(dish: Dish): void {
         const current = dishes.value.find((d) => d.id === dish.id);
@@ -86,6 +93,7 @@ export const useDishesStore = defineStore('dishes', () => {
     return {
         ...base,
         dishes,
+        tags,
         isLoaded,
         details,
         loadDishes,

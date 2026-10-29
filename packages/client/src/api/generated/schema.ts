@@ -357,6 +357,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/api/plans/{planId}/days/{date}/swap': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Swap two days of the plan
+         * @description Swaps the dishes and the ingredients picked for them; to an empty day it is a move.
+         */
+        post: operations['swapPlanDays'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/api/plans/{planId}/days/{date}/ingredients': {
         parameters: {
             query?: never;
@@ -579,6 +599,8 @@ export interface components {
             name: string;
             /** @description Ingredient names in the order of the dish. */
             ingredientNames: string[];
+            /** @description Lowercase, sorted. */
+            tags: string[];
             /** @description Has a recipe text or a source URL. */
             hasRecipe: boolean;
             /** @description How often it was planned: in the app plus before it (imported menus). */
@@ -598,6 +620,8 @@ export interface components {
             recipe: string | null;
             sourceUrl: string | null;
             servings: number | null;
+            /** @description Lowercase, sorted. */
+            tags: string[];
             ingredients: components['schemas']['DishIngredient'][];
         };
         DishIngredientRequest: {
@@ -612,6 +636,8 @@ export interface components {
             recipe?: string | null;
             sourceUrl?: string | null;
             servings?: number | null;
+            /** @description Replaces the tags (stored lowercase, without duplicates). Left out: none for a new dish, unchanged on an update. */
+            tags?: string[];
             ingredients: components['schemas']['DishIngredientRequest'][];
         };
         PlanSummary: {
@@ -695,6 +721,10 @@ export interface components {
         PlanDayRequest: {
             /** @description Null: no cooking. */
             dishId: string | null;
+        };
+        PlanDaySwapRequest: {
+            /** @description YYYY-MM-DD: the other day of the plan. */
+            date: string;
         };
         PlanDayIngredientsRequest: {
             /** @description The ingredients of the dish to buy for this day (replaces the selection). */
@@ -782,6 +812,7 @@ export type UserReference = components['schemas']['UserReference'];
 export type ListItem = components['schemas']['ListItem'];
 export type Plan = components['schemas']['Plan'];
 export type PlanDayRequest = components['schemas']['PlanDayRequest'];
+export type PlanDaySwapRequest = components['schemas']['PlanDaySwapRequest'];
 export type PlanDayIngredientsRequest = components['schemas']['PlanDayIngredientsRequest'];
 export type ListItemRequest = components['schemas']['ListItemRequest'];
 export type ListItemUpdateRequest = components['schemas']['ListItemUpdateRequest'];
@@ -1779,6 +1810,48 @@ export interface operations {
         requestBody: {
             content: {
                 'application/json': components['schemas']['PlanDayRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Plan'];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    swapPlanDays: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['PlanDaySwapRequest'];
             };
         };
         responses: {

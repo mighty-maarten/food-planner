@@ -34,6 +34,7 @@ describe('dish form', () => {
             servings: 4,
             sourceUrl: '  ',
             recipe: '',
+            tags: ['pasta'],
             lines: [line(1, ' Pompoen ', 1, ' stuk '), line(2, '  '), line(3, 'Ui', 0)],
         });
 
@@ -42,6 +43,7 @@ describe('dish form', () => {
             servings: 4,
             sourceUrl: null,
             recipe: null,
+            tags: ['pasta'],
             ingredients: [
                 { name: 'Pompoen', amount: 1, unit: 'stuk' },
                 { name: 'Ui', amount: null, unit: null },
@@ -56,6 +58,7 @@ describe('dish form', () => {
             recipe: null,
             sourceUrl: null,
             servings: null,
+            tags: [],
             ingredients: [
                 { ingredientId: 'i-1', name: 'Pompoen', categoryId: null, amount: 1, unit: null },
             ],
@@ -74,6 +77,7 @@ describe('dish form', () => {
             recipe: null,
             sourceUrl: null,
             servings: null,
+            tags: [],
             ingredients: [],
         });
         expect(state.lines).toHaveLength(1);
@@ -84,7 +88,7 @@ describe('dish form', () => {
         expect(copyName('Risotto', ['Risotto', 'risotto (KOPIE)'])).toBe('Risotto (kopie 2)');
     });
 
-    it('copies the ingredients, recipe and servings of a dish', () => {
+    it('copies the ingredients, recipe, servings and tags of a dish', () => {
         const state = toCopyState(
             {
                 id: 'dish-1',
@@ -92,6 +96,7 @@ describe('dish form', () => {
                 recipe: '1. Fruit de ui.',
                 sourceUrl: 'https://example.com/risotto',
                 servings: 4,
+                tags: ['risotto'],
                 ingredients: [
                     {
                         ingredientId: 'i-1',
@@ -110,6 +115,7 @@ describe('dish form', () => {
             recipe: '1. Fruit de ui.',
             sourceUrl: 'https://example.com/risotto',
             servings: 4,
+            tags: ['risotto'],
             lines: [expect.objectContaining({ name: 'Rijst', amount: 300, unit: 'g' })],
         });
     });

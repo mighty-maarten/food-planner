@@ -10,6 +10,7 @@ import TopBar from '@/components/TopBar.vue';
 import { useIsPhone } from '@/composables/sheet-dialog';
 import DayCard from '@/components/plan/DayCard.vue';
 import DishPickerDialog from '@/components/plan/DishPickerDialog.vue';
+import MoveDayDialog from '@/components/plan/MoveDayDialog.vue';
 import PlanDatesDialog from '@/components/plan/PlanDatesDialog.vue';
 import ShoppingList from '@/components/plan/ShoppingList.vue';
 import { getApiErrorCode } from '@/api/errors';
@@ -37,6 +38,8 @@ const today = DateUtil.today();
 const datesDialogVisible = ref(false);
 const editingDates = ref(false);
 const pickerVisible = ref(false);
+const moveDate = ref<string | null>(null);
+const moveVisible = ref(false);
 const pickerDay = ref<PlanDay | null>(null);
 const menu = ref<InstanceType<typeof Menu>>();
 
@@ -124,6 +127,19 @@ async function setDish(dishId: string | null) {
     const day = pickerDay.value;
     if (!day || !planId.value) return;
     if (!(await plansStore.setDayDish(planId.value, day.date, dishId))) {
+        apiErrorToast(plansStore.getError('update', planId.value));
+    }
+}
+
+function openMove(day: PlanDay) {
+    moveDate.value = day.date;
+    moveVisible.value = true;
+}
+
+async function swapDays(otherDate: string) {
+    const date = moveDate.value;
+    if (!date || !planId.value) return;
+    if (!(await plansStore.swapDays(planId.value, date, otherDate))) {
         apiErrorToast(plansStore.getError('update', planId.value));
     }
 }
@@ -260,6 +276,7 @@ async function deletePlan(id: string, range: string) {
                     :day="day"
                     :is-today="day.date === today"
                     @choose-dish="chooseDish(day)"
+                    @move="openMove(day)"
                 />
             </div>
             <ShoppingList v-else :plan="plan" />
@@ -270,6 +287,13 @@ async function deletePlan(id: string, range: string) {
                 :date="pickerDay.date"
                 :current-dish-id="pickerDay.dish?.id ?? null"
                 @pick="setDish"
+            />
+            <MoveDayDialog
+                v-if="moveDate"
+                v-model:visible="moveVisible"
+                :days="plan.days"
+                :date="moveDate"
+                @pick="swapDays"
             />
         </template>
 
