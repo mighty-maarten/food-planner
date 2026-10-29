@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { Button } from 'primevue';
+import { computed, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { Menu } from 'primevue';
+import type { MenuItem } from 'primevue/menuitem';
 import { useI18n } from 'vue-i18n';
 import type { PlanDay } from '@/api/services/types/plans';
 import { useToastMessages } from '@/composables/toast';
@@ -16,11 +17,11 @@ const emit = defineEmits<{ chooseDish: []; move: [] }>();
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const { apiErrorToast } = useToastMessages();
 const plansStore = usePlansStore();
 
 const selected = computed(() => new Set(props.day.selectedIngredientIds));
-const allIds = computed(() => props.day.dish?.ingredients.map((line) => line.ingredientId) ?? []);
 // Back to this plan (and tab) after editing the dish
 const editDishRoute = computed(() =>
     props.day.dish
@@ -30,6 +31,33 @@ const editDishRoute = computed(() =>
           }
         : undefined,
 );
+
+const menu = ref<InstanceType<typeof Menu>>();
+const menuItems = computed<MenuItem[]>(() => {
+    const dish = props.day.dish;
+    if (!dish) return [];
+    return [
+        {
+            label: t('plan.day.change_dish'),
+            icon: Icons.pencil,
+            command: () => {
+                emit('chooseDish');
+            },
+        },
+        {
+            label: t('plan.day.move'),
+            icon: Icons.move,
+            command: () => {
+                emit('move');
+            },
+        },
+        {
+            label: t('plan.day.open_dish'),
+            icon: Icons.book,
+            command: () => void router.push(buildRoute('dishes_detail', { dishId: dish.id })),
+        },
+    ];
+});
 
 async function setSelection(ingredientIds: string[]) {
     if (!(await plansStore.setDayIngredients(props.planId, props.day.date, ingredientIds))) {
@@ -53,6 +81,18 @@ function toggle(ingredientId: string) {
                 <span class="date">{{ DateUtil.formatDayMonth(day.date) }}</span>
             </h3>
             <span v-if="isToday" class="today-badge">{{ t('plan.today') }}</span>
+            <template v-if="day.dish">
+                <button
+                    type="button"
+                    class="more"
+                    :aria-label="t('plan.day.actions', { name: day.dish.name })"
+                    aria-haspopup="true"
+                    @click="menu?.toggle($event)"
+                >
+                    <i :class="Icons.ellipsis" />
+                </button>
+                <Menu ref="menu" :model="menuItems" popup />
+            </template>
         </header>
 
         <button v-if="!day.dish" type="button" class="choose" @click="emit('chooseDish')">
@@ -61,34 +101,7 @@ function toggle(ingredientId: string) {
         </button>
 
         <template v-else>
-            <div class="dish">
-                <button
-                    type="button"
-                    class="dish-name"
-                    :aria-label="`${t('plan.day.change_dish')}: ${day.dish.name}`"
-                    @click="emit('chooseDish')"
-                >
-                    {{ day.dish.name }}
-                    <i :class="Icons.pencil" />
-                </button>
-                <button
-                    v-tooltip.left="t('plan.day.move')"
-                    type="button"
-                    class="open"
-                    :aria-label="t('plan.day.move')"
-                    @click="emit('move')"
-                >
-                    <i :class="Icons.move" />
-                </button>
-                <RouterLink
-                    v-tooltip.left="t('plan.day.open_dish')"
-                    :to="buildRoute('dishes_detail', { dishId: day.dish.id })"
-                    :aria-label="t('plan.day.open_dish')"
-                    class="open"
-                >
-                    <i :class="Icons.book" />
-                </RouterLink>
-            </div>
+            <h4 class="dish-name">{{ day.dish.name }}</h4>
 
             <p v-if="day.dish.ingredients.length === 0" class="no-ingredients">
                 {{ t('plan.day.no_ingredients') }}
@@ -98,23 +111,6 @@ function toggle(ingredientId: string) {
             </p>
 
             <template v-else>
-                <div class="to-buy">
-                    <span>{{ t('plan.day.to_buy') }}</span>
-                    <Button
-                        :label="t('plan.day.all')"
-                        :disabled="selected.size === allIds.length"
-                        text
-                        size="small"
-                        @click="setSelection(allIds)"
-                    />
-                    <Button
-                        :label="t('plan.day.none')"
-                        :disabled="selected.size === 0"
-                        text
-                        size="small"
-                        @click="setSelection([])"
-                    />
-                </div>
                 <ul class="ingredients">
                     <li v-for="line in day.dish.ingredients" :key="line.ingredientId">
                         <button
@@ -160,9 +156,10 @@ function toggle(ingredientId: string) {
 header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: $spacing-sm;
 
     h3 {
+        flex: 1;
         display: flex;
         align-items: baseline;
         gap: $spacing-sm;
@@ -177,6 +174,26 @@ header {
     .date {
         color: $text-muted-color;
         font-weight: $font-weight-normal;
+    }
+
+    // Top right, without making the header taller
+    .more {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: $touch-target;
+        height: $touch-target;
+        margin: (-$spacing-sm-md) (-$spacing-sm-md) (-$spacing-sm-md) 0;
+        padding: 0;
+        border: none;
+        border-radius: $radius-full;
+        background: none;
+        color: $text-muted-color;
+        cursor: pointer;
+
+        &:hover {
+            background: $hover-color;
+        }
     }
 
     .today-badge {
@@ -208,50 +225,11 @@ header {
     }
 }
 
-.dish {
-    display: flex;
-    align-items: center;
-    gap: $spacing-xs;
-
-    .dish-name {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: $spacing-sm;
-        min-height: $touch-target;
-        padding: 0;
-        border: none;
-        background: none;
-        color: $text-color;
-        font-family: $font-family-heading;
-        font-size: $font-size-lg;
-        font-weight: $font-weight-semibold;
-        text-align: left;
-        cursor: pointer;
-
-        i {
-            color: $text-muted-color;
-            font-size: $font-size-sm;
-        }
-    }
-
-    .open {
-        display: grid;
-        place-items: center;
-        flex-shrink: 0;
-        width: $touch-target;
-        height: $touch-target;
-        padding: 0;
-        border: none;
-        border-radius: $radius-full;
-        background: none;
-        color: $text-muted-color;
-        cursor: pointer;
-
-        &:hover {
-            background: $hover-color;
-        }
-    }
+.dish-name {
+    font-family: $font-family-heading;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    overflow-wrap: anywhere;
 }
 
 .no-ingredients {
@@ -261,18 +239,6 @@ header {
     a {
         color: $primary-color;
         font-weight: $font-weight-medium;
-    }
-}
-
-.to-buy {
-    display: flex;
-    align-items: center;
-    gap: $spacing-xs;
-    color: $text-muted-color;
-    font-size: $font-size-sm;
-
-    span {
-        flex: 1;
     }
 }
 
