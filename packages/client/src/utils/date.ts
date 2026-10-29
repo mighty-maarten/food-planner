@@ -19,6 +19,8 @@ const short = new Intl.DateTimeFormat('nl-BE', {
     month: 'short',
 });
 
+const dayMonthShort = new Intl.DateTimeFormat('nl-BE', { day: 'numeric', month: 'short' });
+
 export const Weekday = { WEDNESDAY: 3, THURSDAY: 4 } as const;
 
 export class DateUtil {
@@ -64,6 +66,12 @@ export class DateUtil {
     }
 
     /** "do 29 okt – wo 4 nov" */
+    /** "29 okt – 4 nov": the range without weekdays, where space is tight */
+    public static formatRangeCompact(start: string, end: string): string {
+        const format = (date: string) => dayMonthShort.format(toDate(date)).replace(/\./g, '');
+        return `${format(start)} – ${format(end)}`;
+    }
+
     public static formatRange(start: string, end: string): string {
         return `${DateUtil.formatShort(start)} – ${DateUtil.formatShort(end)}`;
     }

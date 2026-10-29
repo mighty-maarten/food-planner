@@ -81,6 +81,7 @@ describe('DateUtil', () => {
         expect(DateUtil.formatShort('2026-10-29')).toBe('do 29 okt');
         expect(DateUtil.formatWeekday('2026-10-29')).toBe('donderdag');
         expect(DateUtil.formatRange('2026-10-29', '2026-11-04')).toBe('do 29 okt – wo 4 nov');
+        expect(DateUtil.formatRangeCompact('2026-10-29', '2026-11-04')).toBe('29 okt – 4 nov');
     });
 
     it('counts days across the change to winter time', () => {

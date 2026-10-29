@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, useTemplateRef } from 'vue';
+import { computed, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { buildRoute, type Routes } from '@/router/utils';
+import TopBar from '@/components/TopBar.vue';
 
 const { t } = useI18n();
 
 const nav = useTemplateRef('nav');
 
 // On a phone not every tab fits: keep the active one in view
-onMounted(() => {
-    nav.value?.querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+// (watched: the tabs mount after the page, in the top bar)
+watch(nav, (element) => {
+    element?.querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
 });
 
 const tabs = computed<{ route: Routes; label: string }[]>(() => [
@@ -20,27 +22,35 @@ const tabs = computed<{ route: Routes; label: string }[]>(() => [
 ]);
 </script>
 
+<!-- In the app's top bar -->
 <template>
-    <nav ref="nav" class="library-tabs">
-        <RouterLink
-            v-for="tab in tabs"
-            :key="tab.route"
-            :to="buildRoute(tab.route)"
-            class="tab"
-            exact-active-class="active"
-        >
-            {{ tab.label }}
-        </RouterLink>
-    </nav>
+    <TopBar>
+        <nav ref="nav" class="library-tabs">
+            <RouterLink
+                v-for="tab in tabs"
+                :key="tab.route"
+                :to="buildRoute(tab.route)"
+                class="tab"
+                exact-active-class="active"
+            >
+                {{ tab.label }}
+            </RouterLink>
+        </nav>
+    </TopBar>
 </template>
 
 <style scoped lang="scss">
 .library-tabs {
+    flex: 1;
     display: flex;
     gap: $spacing-sm;
-    margin: 0 (-$spacing-md) $spacing-md;
-    padding: 0 $spacing-md;
+    min-width: 0;
+    // Scrolls to the screen edge on the left
+    margin-left: -$spacing-md;
+    padding: 0 $spacing-lg 0 $spacing-md;
     overflow-x: auto;
+    // Fades out under the account button: there are more tabs to scroll to
+    mask-image: linear-gradient(to right, #000 calc(100% - #{$spacing-lg}), transparent);
     scrollbar-width: none;
 
     .tab {

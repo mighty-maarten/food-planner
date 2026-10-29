@@ -86,9 +86,10 @@ home.
 - Per item, the store can deviate from the ingredient's defaults for this list only: the ⋮ menu
   of an item in shop mode (or the item dialog in build mode) offers the default, a store or any
   store. The filter uses this choice; carry over keeps it. Offline it is queued like a tick.
-- Shop mode has no top bar on phones: one sticky toolbar with the store choice, the live/offline
-  status and the count, the progress as its bottom edge, and small category labels, so the list
-  starts right at the top.
+- No page titles: every page fills the sticky top bar itself, next to the account button (phones)
+  — the week picker on Weekmenu, the library tabs on Gerechten, back + title on detail pages. In
+  shop mode it holds the count, the store filter and the live/offline status, with the progress
+  as its bottom edge, and small category labels, so the list starts right at the top.
 - "Needed by" is shown on every item.
 - Works offline: the active list is cached on the device and ticks made offline are synced when the
   connection is back. Two people can shop at the same time (e.g. in two stores): ticks show up live
