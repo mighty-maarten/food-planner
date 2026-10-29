@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Button, Dialog, InputText, Select, SelectButton } from 'primevue';
+import { Button, Dialog, InputText, Select, SelectButton, ToggleSwitch } from 'primevue';
 import { useI18n } from 'vue-i18n';
 import { getApiErrorDetails } from '@/api/errors';
 import type { Ingredient, IngredientRequest } from '@/api/services/types/library';
@@ -18,7 +18,12 @@ const dialogProps = useSheetDialog();
 const { apiErrorToast, errorToast, successToast } = useToastMessages();
 const catalogueStore = useCatalogueStore();
 
-const form = ref<IngredientRequest>({ name: '', categoryId: null, storeIds: [] });
+const form = ref<IngredientRequest>({
+    name: '',
+    categoryId: null,
+    storeIds: [],
+    alwaysOnList: false,
+});
 
 const saveKey = computed(() => props.ingredient?.id);
 const isSaving = computed(() =>
@@ -33,6 +38,7 @@ watch(visible, (open) => {
         name: props.ingredient?.name ?? '',
         categoryId: props.ingredient?.categoryId ?? null,
         storeIds: [...(props.ingredient?.storeIds ?? [])],
+        alwaysOnList: props.ingredient?.alwaysOnList ?? false,
     };
 });
 
@@ -124,6 +130,13 @@ async function remove() {
                     }}
                 </small>
             </div>
+            <label class="always" for="ingredient-always">
+                <span class="text">
+                    <span class="label">{{ t('ingredients.form.always_on_list') }}</span>
+                    <small class="hint">{{ t('ingredients.form.always_on_list_hint') }}</small>
+                </span>
+                <ToggleSwitch v-model="form.alwaysOnList" input-id="ingredient-always" />
+            </label>
         </form>
         <template #footer>
             <Button
@@ -190,6 +203,26 @@ async function remove() {
 
 .hint {
     color: $text-muted-color;
+}
+
+// The whole row toggles: a big target, the switch alone is small
+.always {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    min-height: $touch-target;
+    cursor: pointer;
+
+    .text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-xxs;
+    }
+
+    .label {
+        font-weight: $font-weight-medium;
+    }
 }
 
 .delete {

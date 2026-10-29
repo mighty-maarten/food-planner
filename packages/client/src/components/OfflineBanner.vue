@@ -26,8 +26,8 @@ const isOffline = computed(() => !isOnline.value || authStore.isOfflineSession);
     justify-content: center;
     gap: $spacing-sm;
     padding: $spacing-xs $spacing-md;
-    background: $saffron-color;
-    color: var(--p-surface-950);
+    background: $saffron-surface-color;
+    color: $on-saffron-surface-color;
     font-size: $font-size-sm;
     font-weight: $font-weight-medium;
 }

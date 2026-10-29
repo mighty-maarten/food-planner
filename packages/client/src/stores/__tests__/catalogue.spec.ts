@@ -30,6 +30,7 @@ const yoghurt = {
     categoryId: 'dairy',
     storeIds: ['store-1'],
     dishCount: 0,
+    alwaysOnList: false,
 };
 
 describe('catalogue store', () => {

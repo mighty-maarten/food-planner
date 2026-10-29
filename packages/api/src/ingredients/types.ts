@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
     ArrayUnique,
     IsArray,
+    IsBoolean,
     IsNotEmpty,
     IsOptional,
     IsString,
@@ -21,6 +22,8 @@ export class Ingredient {
     public storeIds!: string[];
     @ApiProperty({ description: 'Number of dishes using this ingredient.' })
     public dishCount!: number;
+    @ApiProperty({ description: 'Always needed: a new plan starts with it on its shopping list.' })
+    public alwaysOnList!: boolean;
 
     constructor(ingredient: Ingredient) {
         Object.assign(this, ingredient);
@@ -45,6 +48,16 @@ export class IngredientRequest {
     @ArrayUnique()
     @IsUUID('all', { each: true })
     public storeIds!: string[];
+
+    @ApiProperty({
+        required: false,
+        description:
+            'Always needed: a new plan starts with it. Left out: false for a new ' +
+            'ingredient, unchanged on an update.',
+    })
+    @IsOptional()
+    @IsBoolean()
+    public alwaysOnList?: boolean;
 }
 
 /** A dish using an ingredient, returned when the ingredient cannot be deleted */

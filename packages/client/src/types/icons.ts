@@ -12,6 +12,7 @@ export const Icons = {
     pencil: 'pi pi-pencil',
     trash: 'pi pi-trash',
     copy: 'pi pi-copy',
+    pin: 'pi pi-thumbtack',
     search: 'pi pi-search',
     arrowLeft: 'pi pi-arrow-left',
     arrowUp: 'pi pi-arrow-up',

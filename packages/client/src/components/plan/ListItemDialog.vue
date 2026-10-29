@@ -31,7 +31,7 @@ const storeOptions = computed(() => [
         label: t('plan.item.store_default', {
             stores:
                 storeNames(props.item?.defaultStoreIds ?? [], catalogueStore.stores) ??
-                t('plan.item.store_any').toLowerCase(),
+                t('plan.item.store_none'),
         }),
     },
     ...catalogueStore.stores.map((s) => ({ value: s.id, label: s.name })),

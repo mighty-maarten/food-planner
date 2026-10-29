@@ -56,6 +56,9 @@ home.
   buy fresh things later. The same ingredient in several dishes becomes one line with the earliest
   date and the dishes it comes from. Editable.
 - Unticked items of the previous plan can be carried over to the new one.
+- Ingredients that are always needed (bread, milk) can be marked "Altijd op de lijst": a new plan
+  starts with them on its list as free items. Existing plans don't change; removing one from a
+  list is for that week only.
 - Decided while building milestone 3:
   - Plans don't overlap (409 `CONFLICT`), so "the plan of today" and "the previous plan" are
     unambiguous. A plan lasts at most 31 days. The current plan is the one with today in it, else
@@ -78,7 +81,7 @@ home.
 
 - Optimised for one hand on a phone: big tap targets, tick an item as it goes into the basket,
   ticked items drop to the bottom and can be unticked.
-- Filter by store ("I'm at store A": its items plus items without a store) and group by category
+- Filter by store ("I'm at store A": its items plus items set to "any store" on the list; items without a store only show without a filter) and group by category
   in that store's order.
 - Per item, the store can deviate from the ingredient's defaults for this list only: the ⋮ menu
   of an item in shop mode (or the item dialog in build mode) offers the default, a store or any
