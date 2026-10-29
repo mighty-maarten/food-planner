@@ -17,6 +17,28 @@ describe('TextUtil.matches', () => {
     });
 });
 
+describe('TextUtil.highlight', () => {
+    it('marks every word of the query, ignoring case and accents', () => {
+        expect(TextUtil.highlight('creme kip', 'Kip met crème fraîche')).toEqual([
+            { text: 'Kip', match: true },
+            { text: ' met ', match: false },
+            { text: 'crème', match: true },
+            { text: ' fraîche', match: false },
+        ]);
+    });
+
+    it('marks repeated and overlapping matches', () => {
+        expect(TextUtil.highlight('aa', 'aaa b')).toEqual([
+            { text: 'aaa', match: true },
+            { text: ' b', match: false },
+        ]);
+    });
+
+    it('returns the whole value unmarked for an empty query', () => {
+        expect(TextUtil.highlight(' ', 'Risotto')).toEqual([{ text: 'Risotto', match: false }]);
+    });
+});
+
 describe('formatAmount', () => {
     it.each([
         [300, 'g', '300 g'],
