@@ -77,7 +77,8 @@
             "open_dish": "Gerecht bekijken",
             "selected_count": "{count} op de lijst | {count} op de lijst",
             "move": "Naar een andere dag",
-            "actions": "Acties voor {name}"
+            "actions": "Acties voor {name}",
+            "clear_dish": "Wis gerecht"
         },
         "picker": {
             "title": "Gerecht voor {day}",

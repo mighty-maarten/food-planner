@@ -56,8 +56,21 @@ const menuItems = computed<MenuItem[]>(() => {
             icon: Icons.book,
             command: () => void router.push(buildRoute('dishes_detail', { dishId: dish.id })),
         },
+        { separator: true },
+        {
+            label: t('plan.day.clear_dish'),
+            icon: Icons.trash,
+            command: () => void clearDish(),
+        },
     ];
 });
+
+/** Back to an empty day; the ingredients picked for it leave the list */
+async function clearDish() {
+    if (!(await plansStore.setDayDish(props.planId, props.day.date, null))) {
+        apiErrorToast(plansStore.getError('update', props.planId));
+    }
+}
 
 async function setSelection(ingredientIds: string[]) {
     if (!(await plansStore.setDayIngredients(props.planId, props.day.date, ingredientIds))) {
