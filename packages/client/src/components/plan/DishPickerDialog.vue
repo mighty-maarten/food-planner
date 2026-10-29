@@ -2,8 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { Dialog, IconField, InputIcon, InputText } from 'primevue';
 import { useI18n } from 'vue-i18n';
-import { useSheetDialog } from '@/composables/sheet-dialog';
+import { useIsPhone, useSheetDialog } from '@/composables/sheet-dialog';
 import { useToastMessages } from '@/composables/toast';
+import { useVisualViewport } from '@/composables/visual-viewport';
 import { useDishesStore } from '@/stores/dishes';
 import { Icons } from '@/types/icons';
 import { DateUtil } from '@/utils/date';
@@ -15,7 +16,29 @@ const visible = defineModel<boolean>('visible', { required: true });
 const emit = defineEmits<{ pick: [dishId: string | null] }>();
 
 const { t } = useI18n();
-const dialogProps = useSheetDialog();
+const sheetProps = useSheetDialog();
+const isPhone = useIsPhone();
+const viewport = useVisualViewport();
+
+// Full screen on phones, sized to what the keyboard leaves visible: the search field stays at the
+// top and the list ends right above the keyboard
+const dialogProps = computed(() =>
+    isPhone.value
+        ? {
+              ...sheetProps.value,
+              position: 'top' as const,
+              style: {
+                  width: '100vw',
+                  height: `${String(viewport.height.value)}px`,
+                  maxHeight: 'none',
+                  margin: '0',
+                  marginTop: `${String(viewport.offsetTop.value)}px`,
+                  borderRadius: '0',
+              },
+              contentStyle: { display: 'flex', flexDirection: 'column', flex: '1', minHeight: '0' },
+          }
+        : sheetProps.value,
+);
 const { apiErrorToast } = useToastMessages();
 const dishesStore = useDishesStore();
 
@@ -35,8 +58,11 @@ const canCreate = computed(() => {
     const name = query.value.trim().toLowerCase();
     return !!name && !dishesStore.dishes.some((dish) => dish.name.toLowerCase() === name);
 });
-const dayLabel = computed(
-    () => `${DateUtil.formatWeekday(props.date)} ${DateUtil.formatDayMonth(props.date)}`,
+// Short on phones, so the title fits on one line ("do 29 okt")
+const dayLabel = computed(() =>
+    isPhone.value
+        ? DateUtil.formatShort(props.date)
+        : `${DateUtil.formatWeekday(props.date)} ${DateUtil.formatDayMonth(props.date)}`,
 );
 
 watch(visible, (open) => {
@@ -46,6 +72,17 @@ watch(visible, (open) => {
 onMounted(() => {
     if (!dishesStore.isLoaded) void dishesStore.loadDishes();
 });
+
+/** Close the keyboard, so the whole list is visible */
+function hideKeyboard() {
+    const focused = document.activeElement;
+    if (focused instanceof HTMLInputElement) focused.blur();
+}
+
+function onEnter() {
+    if (canCreate.value && matches.value.length === 0) void create();
+    else hideKeyboard();
+}
 
 function pick(dishId: string | null) {
     visible.value = false;
@@ -82,12 +119,17 @@ async function create() {
                 :aria-label="t('plan.picker.search')"
                 maxlength="200"
                 fluid
-                autofocus
-                @keydown.enter.prevent="canCreate && matches.length === 0 ? create() : undefined"
+                :autofocus="!isPhone"
+                enterkeyhint="search"
+                @keydown.enter.prevent="onEnter"
             />
         </IconField>
 
-        <ul class="options">
+        <ul
+            class="options"
+            :class="{ fill: isPhone, compact: query.trim() }"
+            @touchmove.passive="hideKeyboard"
+        >
             <li v-if="canCreate">
                 <button
                     type="button"
@@ -113,9 +155,26 @@ async function create() {
                     @click="pick(dish.id)"
                 >
                     <span class="text">
-                        <span class="name">{{ dish.name }}</span>
+                        <span class="name">
+                            <template
+                                v-for="(part, index) in TextUtil.highlight(query, dish.name)"
+                                :key="index"
+                            >
+                                <mark v-if="part.match">{{ part.text }}</mark>
+                                <template v-else>{{ part.text }}</template>
+                            </template>
+                        </span>
                         <span v-if="dish.ingredientNames.length" class="ingredients">
-                            {{ dish.ingredientNames.join(', ') }}
+                            <template
+                                v-for="(part, index) in TextUtil.highlight(
+                                    query,
+                                    dish.ingredientNames.join(', '),
+                                )"
+                                :key="index"
+                            >
+                                <mark v-if="part.match">{{ part.text }}</mark>
+                                <template v-else>{{ part.text }}</template>
+                            </template>
                         </span>
                     </span>
                     <span
@@ -145,6 +204,30 @@ async function create() {
     // Scrolls inside the sheet, the search field stays in view
     max-height: 55dvh;
     overflow-y: auto;
+    overscroll-behavior: contain;
+
+    // Full screen on phones: the list takes the height left under the search field
+    &.fill {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+    }
+
+    // While searching: more results above the keyboard
+    &.compact .option {
+        min-height: $touch-target;
+        padding-block: $spacing-xs;
+
+        .ingredients {
+            font-size: $font-size-xs;
+        }
+    }
+}
+
+mark {
+    background: none;
+    color: inherit;
+    font-weight: $font-weight-bold;
 }
 
 .option {
