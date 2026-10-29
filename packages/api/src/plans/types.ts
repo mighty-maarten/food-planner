@@ -161,6 +161,12 @@ export class PlanDayRequest {
     public dishId!: string | null;
 }
 
+export class PlanDaySwapRequest {
+    @ApiProperty({ description: 'YYYY-MM-DD: the other day of the plan.' })
+    @IsIsoDate()
+    public date!: string;
+}
+
 export class PlanDayIngredientsRequest {
     @ApiProperty({
         type: [String],

@@ -17,6 +17,10 @@ export class DishEntity extends BaseEntity {
     @Column({ type: 'int', nullable: true })
     servings!: number | null;
 
+    /** Lowercase, sorted, unique */
+    @Column({ type: 'text', array: true, default: () => "'{}'" })
+    tags!: string[];
+
     /** How often it was planned before the app (imported) */
     @Column({ type: 'int', default: 0 })
     historicalCount!: number;

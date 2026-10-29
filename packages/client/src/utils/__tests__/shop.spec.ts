@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ListItem, Plan } from '@/api/services/types/plans';
-import { applyTick, buildShopList, isNeededSoon } from '@/utils/shop';
+import { applyTick, buildShopList, isNeededSoon, totalAmount } from '@/utils/shop';
 
 const item = (name: string, overrides: Partial<ListItem> = {}): ListItem => ({
     id: name,
@@ -49,6 +49,35 @@ const items = [
     // Set to "any store" on this list
     item('Zout', { storeOverride: true, storeIds: [] }),
 ];
+
+describe('totalAmount', () => {
+    const source = (amount: number | null, unit: string | null) => ({
+        date: '2026-10-29',
+        dishId: 'd',
+        dishName: 'Dish',
+        amount,
+        unit,
+    });
+
+    it('adds up the amounts per unit', () => {
+        expect(
+            totalAmount(
+                item('Rijst', {
+                    sources: [
+                        source(300, 'g'),
+                        source(200, 'G'),
+                        source(2, null),
+                        source(null, null),
+                    ],
+                }),
+            ),
+        ).toBe('500 g + 2');
+    });
+
+    it('is empty without amounts', () => {
+        expect(totalAmount(item('Ui', { sources: [source(null, null)] }))).toBe('');
+    });
+});
 
 describe('buildShopList', () => {
     it('follows the route through the chosen store', () => {

@@ -193,6 +193,55 @@ export class PlansService {
         return this.changed(planId, userId);
     }
 
+    /**
+     * Swaps the dishes of two days, with the ingredients picked for them (moves the dish when the
+     * other day is empty). The list items stay; their derived "needed by" follows the new days.
+     */
+    public async swapDays(
+        planId: string,
+        date: string,
+        otherDate: string,
+        userId: string,
+    ): Promise<Plan> {
+        await this.assertDayOfPlan(planId, date);
+        await this.assertDayOfPlan(planId, otherDate);
+        if (date === otherDate) return this.getPlan(planId);
+
+        await this.planRepository.manager.transaction(async (manager) => {
+            const dates = [date, otherDate];
+            const days: { date: string; dishId: string }[] = await manager.query(
+                `SELECT to_char(date, 'YYYY-MM-DD') AS date, dish_id AS "dishId"
+                 FROM plan_days WHERE plan_id = $1 AND date = ANY($2::date[])`,
+                [planId, dates],
+            );
+            const sources: { listItemId: string; date: string }[] = await manager.query(
+                `SELECT list_item_id AS "listItemId", to_char(date, 'YYYY-MM-DD') AS date
+                 FROM list_item_sources WHERE plan_id = $1 AND date = ANY($2::date[])`,
+                [planId, dates],
+            );
+            const swap = (day: string) => (day === date ? otherDate : date);
+
+            // Delete and insert again: swapping the dates in place would collide on the keys
+            await manager.query(
+                'DELETE FROM plan_days WHERE plan_id = $1 AND date = ANY($2::date[])',
+                [planId, dates],
+            );
+            for (const day of days) {
+                await manager.query(
+                    'INSERT INTO plan_days (plan_id, date, dish_id) VALUES ($1, $2, $3)',
+                    [planId, swap(day.date), day.dishId],
+                );
+            }
+            for (const source of sources) {
+                await manager.query(
+                    'INSERT INTO list_item_sources (list_item_id, plan_id, date) VALUES ($1, $2, $3)',
+                    [source.listItemId, planId, swap(source.date)],
+                );
+            }
+        });
+        return this.changed(planId, userId);
+    }
+
     /** Sets which ingredients of the day's dish need to be bought (the rest is at home) */
     public async setDayIngredients(
         planId: string,

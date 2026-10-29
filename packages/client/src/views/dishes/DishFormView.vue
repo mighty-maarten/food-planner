@@ -15,6 +15,7 @@ import type { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import { useConfirm } from 'primevue/useconfirm';
 import { useI18n } from 'vue-i18n';
 import PageHeader from '@/components/PageHeader.vue';
+import TagInput from '@/components/dishes/TagInput.vue';
 import {
     type DishFormState,
     duplicateLineKeys,
@@ -311,6 +312,11 @@ onBeforeRouteLeave(() => {
                     @click="addLine"
                 />
             </fieldset>
+
+            <div class="field">
+                <label for="dish-tag">{{ t('dishes.tags.label') }}</label>
+                <TagInput v-model="form.tags" :known="dishesStore.tags" input-id="dish-tag" />
+            </div>
 
             <div class="row">
                 <div class="field servings">

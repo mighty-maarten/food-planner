@@ -22,6 +22,7 @@ describe('Plans (e2e)', () => {
         createPlan: vi.fn(),
         setDayDish: vi.fn(),
         setDayIngredients: vi.fn(),
+        swapDays: vi.fn(),
         addItem: vi.fn(),
         setItemChecked: vi.fn(),
         setItemStore: vi.fn(),
@@ -101,6 +102,26 @@ describe('Plans (e2e)', () => {
             [dishId],
             testUser.id,
         );
+    });
+
+    it('swaps two days as the logged-in user', async () => {
+        await send('post', `/api/${planId}/days/2026-10-30/swap`, { date: '2026-11-02' }).expect(
+            200,
+        );
+
+        expect(plansService.swapDays).toHaveBeenCalledWith(
+            planId,
+            '2026-10-30',
+            '2026-11-02',
+            testUser.id,
+        );
+    });
+
+    it('needs a valid date to swap with', async () => {
+        await send('post', `/api/${planId}/days/2026-10-30/swap`, { date: '2026-02-30' }).expect(
+            400,
+        );
+        expect(plansService.swapDays).not.toHaveBeenCalled();
     });
 
     it('trims a free item and drops an empty note', async () => {

@@ -17,6 +17,12 @@ import {
 } from 'class-validator';
 import { Trim, TrimToNull } from '../common/transforms.js';
 
+/** Lowercase, trimmed, unique and sorted: "Pasta " and "pasta" are one tag */
+export function normalizeTags(tags: string[]): string[] {
+    const normalized = tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+    return [...new Set(normalized)].sort((a, b) => a.localeCompare(b, 'nl'));
+}
+
 export class DishIngredient {
     @ApiProperty()
     public ingredientId!: string;
@@ -45,6 +51,8 @@ export class Dish {
     public sourceUrl!: string | null;
     @ApiProperty({ type: Number, nullable: true })
     public servings!: number | null;
+    @ApiProperty({ type: [String], description: 'Lowercase, sorted.' })
+    public tags!: string[];
     @ApiProperty({ type: [DishIngredient] })
     public ingredients!: DishIngredient[];
 
@@ -61,6 +69,8 @@ export class DishListItem {
     public name!: string;
     @ApiProperty({ type: [String], description: 'Ingredient names in the order of the dish.' })
     public ingredientNames!: string[];
+    @ApiProperty({ type: [String], description: 'Lowercase, sorted.' })
+    public tags!: string[];
     @ApiProperty({ description: 'Has a recipe text or a source URL.' })
     public hasRecipe!: boolean;
     @ApiProperty({
@@ -124,6 +134,20 @@ export class DishRequest {
     @Min(1)
     @Max(100)
     public servings?: number | null;
+
+    @ApiProperty({
+        type: [String],
+        required: false,
+        description:
+            'Replaces the tags (stored lowercase, without duplicates). Left out: none for a new ' +
+            'dish, unchanged on an update.',
+    })
+    @IsOptional()
+    @IsArray()
+    @ArrayMaxSize(20)
+    @IsString({ each: true })
+    @MaxLength(30, { each: true })
+    public tags?: string[];
 
     @ApiProperty({ type: [DishIngredientRequest] })
     @IsArray()

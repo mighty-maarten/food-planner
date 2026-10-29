@@ -43,6 +43,7 @@ import {
     PlanEventKind,
     PlanDayIngredientsRequest,
     PlanDayRequest,
+    PlanDaySwapRequest,
     PlanRequest,
     PlanSummary,
 } from './types.js';
@@ -127,6 +128,23 @@ export class PlansController {
         @CurrentUserId() userId: string,
     ): Promise<Plan> {
         return this.plansService.setDayDish(planId, date, request.dishId, userId);
+    }
+
+    @Post(`${DAY}/swap`)
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Swap two days of the plan',
+        description:
+            'Swaps the dishes and the ingredients picked for them; to an empty day it is a move.',
+    })
+    @ApiOkResponse({ type: Plan })
+    swapPlanDays(
+        @Param(routeParams.planId, ParseUUIDPipe) planId: string,
+        @Param(routeParams.date, ParseIsoDatePipe) date: string,
+        @Body() request: PlanDaySwapRequest,
+        @CurrentUserId() userId: string,
+    ): Promise<Plan> {
+        return this.plansService.swapDays(planId, date, request.date, userId);
     }
 
     @Put(`${DAY}/ingredients`)

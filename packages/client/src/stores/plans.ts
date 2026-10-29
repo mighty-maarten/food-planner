@@ -107,6 +107,10 @@ export const usePlansStore = defineStore('plans', () => {
         return update(planId, () => PlansApi.setDayDish(planId, date, dishId));
     }
 
+    function swapDays(planId: string, date: string, otherDate: string) {
+        return update(planId, () => PlansApi.swapDays(planId, date, otherDate));
+    }
+
     /** Shows the new selection immediately */
     function setDayIngredients(planId: string, date: string, ingredientIds: string[]) {
         const day = details.value.get(planId)?.days.find((d) => d.date === date);
@@ -166,6 +170,7 @@ export const usePlansStore = defineStore('plans', () => {
         updatePlan,
         deletePlan,
         setDayDish,
+        swapDays,
         setDayIngredients,
         addItem,
         updateItem,

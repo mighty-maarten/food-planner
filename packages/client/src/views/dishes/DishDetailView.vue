@@ -97,6 +97,9 @@ async function deleteDish(name: string) {
         <div v-else-if="!dish" class="center"><ProgressSpinner /></div>
 
         <template v-else>
+            <ul v-if="dish.tags.length" class="tags" :aria-label="t('dishes.tags.label')">
+                <li v-for="tag in dish.tags" :key="tag">{{ tag }}</li>
+            </ul>
             <p v-if="dish.servings || dish.sourceUrl" class="meta">
                 <span v-if="dish.servings">
                     <i :class="Icons.users" />
@@ -155,6 +158,23 @@ async function deleteDish(name: string) {
     display: grid;
     place-items: center;
     padding: $spacing-2xl 0;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+    margin: 0 0 $spacing-sm;
+    padding: 0;
+    list-style: none;
+
+    li {
+        padding: $spacing-xxs $spacing-sm;
+        border-radius: $radius-full;
+        background: $hover-color;
+        color: $text-muted-color;
+        font-size: $font-size-sm;
+    }
 }
 
 .meta {

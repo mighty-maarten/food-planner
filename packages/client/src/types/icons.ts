@@ -29,4 +29,7 @@ export const Icons = {
     list: 'pi pi-list',
     file: 'pi pi-file',
     refresh: 'pi pi-refresh',
+    move: 'pi pi-arrows-v',
+    undo: 'pi pi-undo',
+    tags: 'pi pi-tags',
 } as const;
