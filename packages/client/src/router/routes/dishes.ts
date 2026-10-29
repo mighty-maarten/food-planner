@@ -24,8 +24,8 @@ export interface DishesRouteParams {
 }
 
 /**
- * Children of the /gerechten route. Pages with their own PageHeader keep the section name as
- * title, so the mobile top bar doesn't repeat the page header.
+ * Children of the /gerechten route. The titles are for the browser tab; the pages fill the top
+ * bar themselves (library tabs or a PageHeader).
  */
 export const dishesRoutes = [
     {

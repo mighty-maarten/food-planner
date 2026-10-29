@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { Button, ConfirmDialog, Menu, Toast } from 'primevue';
 import type { MenuItem } from 'primevue/menuitem';
 import { useOnline } from '@vueuse/core';
@@ -12,7 +12,6 @@ import OfflineBanner from '@/components/OfflineBanner.vue';
 // Served from public/, also the source of the generated PWA icons
 const logoUrl = '/logo.svg';
 
-const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
@@ -24,7 +23,6 @@ const navItems = computed<{ route: Routes; label: string; icon: string }[]>(() =
     { route: 'common_dishes', label: t('nav.dishes'), icon: Icons.book },
 ]);
 
-const pageTitle = computed(() => (route.meta.title ? t(route.meta.title) : t('app.name')));
 const initials = computed(() => authStore.currentUser?.name.slice(0, 1).toUpperCase() ?? '?');
 
 const userMenu = ref<InstanceType<typeof Menu>>();
@@ -86,8 +84,9 @@ async function logout() {
 
         <div class="main">
             <OfflineBanner />
-            <header v-if="!route.meta.hideTopBar" class="top-bar">
-                <h1>{{ pageTitle }}</h1>
+            <!-- The page fills the top bar (its title, week picker, tabs, ...) through <TopBar> -->
+            <header class="top-bar">
+                <div id="top-bar-content" class="content" />
                 <button
                     class="avatar"
                     type="button"
@@ -240,24 +239,33 @@ async function logout() {
     }
 }
 
-// Mobile: top bar with page title and account menu
+// Top bar: what the page puts in it, and the account menu on mobile (the sidebar has it on
+// desktop). Aligned with the page's content column.
 .top-bar {
     position: sticky;
     top: 0;
     z-index: 2;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: $spacing-md;
-    padding: calc($spacing-sm-md + env(safe-area-inset-top)) $spacing-md $spacing-sm-md;
+    gap: $spacing-sm;
+    width: 100%;
+    max-width: 960px;
+    min-height: calc($touch-target + $spacing-sm + env(safe-area-inset-top));
+    margin: 0 auto;
+    padding: calc($spacing-xs + env(safe-area-inset-top)) $spacing-md $spacing-xs;
     background: $background-color;
 
-    h1 {
-        font-size: $font-size-xl;
+    .content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        min-width: 0;
     }
 
-    @include minb($breakpoint-lg) {
-        display: none;
+    .avatar {
+        @include minb($breakpoint-lg) {
+            display: none;
+        }
     }
 }
 

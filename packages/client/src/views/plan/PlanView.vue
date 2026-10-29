@@ -6,6 +6,8 @@ import type { MenuItem } from 'primevue/menuitem';
 import { useConfirm } from 'primevue/useconfirm';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
+import TopBar from '@/components/TopBar.vue';
+import { useIsPhone } from '@/composables/sheet-dialog';
 import DayCard from '@/components/plan/DayCard.vue';
 import DishPickerDialog from '@/components/plan/DishPickerDialog.vue';
 import PlanDatesDialog from '@/components/plan/PlanDatesDialog.vue';
@@ -23,6 +25,8 @@ import { pickCurrentPlan } from '@/utils/plan';
 const props = defineProps<{ planId?: string }>();
 
 const { t } = useI18n();
+// The week picker shares the top bar with the account button: a shorter range on phones
+const isPhone = useIsPhone();
 const route = useRoute();
 const router = useRouter();
 const confirm = useConfirm();
@@ -149,6 +153,8 @@ async function deletePlan(id: string, range: string) {
 
 <template>
     <main class="page">
+        <TopBar v-if="!plan" :title="t('nav.plan')" />
+
         <div v-if="!plansStore.isLoaded && plansStore.isLoading('loadPlans')" class="center">
             <ProgressSpinner />
         </div>
@@ -191,42 +197,51 @@ async function deletePlan(id: string, range: string) {
         <div v-else-if="!plan" class="center"><ProgressSpinner /></div>
 
         <template v-else>
-            <header class="plan-header">
-                <Button
-                    :icon="Icons.chevronLeft"
-                    :aria-label="t('plan.previous')"
-                    :disabled="!olderPlan"
-                    text
-                    rounded
-                    severity="secondary"
-                    @click="
-                        olderPlan &&
-                        router.push(buildRoute('plan_detail', { planId: olderPlan.id }))
-                    "
-                />
-                <h2>{{ DateUtil.formatRange(plan.startDate, plan.endDate) }}</h2>
-                <Button
-                    :icon="Icons.chevronRight"
-                    :aria-label="t('plan.next')"
-                    :disabled="!newerPlan"
-                    text
-                    rounded
-                    severity="secondary"
-                    @click="
-                        newerPlan &&
-                        router.push(buildRoute('plan_detail', { planId: newerPlan.id }))
-                    "
-                />
-                <Button
-                    :icon="Icons.ellipsis"
-                    :aria-label="t('plan.actions')"
-                    text
-                    rounded
-                    severity="secondary"
-                    @click="menu?.toggle($event)"
-                />
-                <Menu ref="menu" :model="menuItems" popup />
-            </header>
+            <!-- The week picker, in the app's top bar -->
+            <TopBar>
+                <header class="plan-header">
+                    <Button
+                        :icon="Icons.chevronLeft"
+                        :aria-label="t('plan.previous')"
+                        :disabled="!olderPlan"
+                        text
+                        rounded
+                        severity="secondary"
+                        @click="
+                            olderPlan &&
+                            router.push(buildRoute('plan_detail', { planId: olderPlan.id }))
+                        "
+                    />
+                    <h2>
+                        {{
+                            isPhone
+                                ? DateUtil.formatRangeCompact(plan.startDate, plan.endDate)
+                                : DateUtil.formatRange(plan.startDate, plan.endDate)
+                        }}
+                    </h2>
+                    <Button
+                        :icon="Icons.chevronRight"
+                        :aria-label="t('plan.next')"
+                        :disabled="!newerPlan"
+                        text
+                        rounded
+                        severity="secondary"
+                        @click="
+                            newerPlan &&
+                            router.push(buildRoute('plan_detail', { planId: newerPlan.id }))
+                        "
+                    />
+                    <Button
+                        :icon="Icons.ellipsis"
+                        :aria-label="t('plan.actions')"
+                        text
+                        rounded
+                        severity="secondary"
+                        @click="menu?.toggle($event)"
+                    />
+                    <Menu ref="menu" :model="menuItems" popup />
+                </header>
+            </TopBar>
 
             <SelectButton
                 v-model="tab"
@@ -278,15 +293,19 @@ async function deletePlan(id: string, range: string) {
 }
 
 .plan-header {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: $spacing-xs;
-    margin: 0 (-$spacing-sm) $spacing-md;
+    min-width: 0;
+    margin-left: -$spacing-sm;
 
     h2 {
         flex: 1;
+        min-width: 0;
         font-size: $font-size-lg;
         text-align: center;
+        @include ellipsis;
     }
 
     :deep(.p-button) {

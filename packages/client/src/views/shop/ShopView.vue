@@ -6,6 +6,7 @@ import type { MenuItem } from 'primevue/menuitem';
 import { useEventListener } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
+import TopBar from '@/components/TopBar.vue';
 import type { ListItem } from '@/api/services/types/plans';
 import { useAuthStore } from '@/stores/auth';
 import { useShopStore } from '@/stores/shop';
@@ -141,6 +142,8 @@ useEventListener(document, 'visibilitychange', () => {
 
 <template>
     <main class="page">
+        <TopBar v-if="!shop.plan || !list" :title="t('nav.shop')" />
+
         <div v-if="!shop.plan && shop.isLoading" class="center"><ProgressSpinner /></div>
 
         <EmptyState
@@ -163,62 +166,68 @@ useEventListener(document, 'visibilitychange', () => {
         </EmptyState>
 
         <template v-else-if="list">
-            <!-- One slim bar: the list starts right below it -->
-            <div class="toolbar">
-                <span v-if="total" class="count" :aria-label="t('shop.progress', { done, total })">
-                    {{ t('shop.progress_short', { done, total }) }}
-                </span>
-                <!-- The store filter lives behind the filter button, but stays visible when on -->
-                <span v-if="shop.storeId" class="active-store">
-                    <i :class="Icons.shop" />{{ storeLabel }}
-                </span>
-                <span class="spacer" />
-                <Menu ref="storeMenu" :model="storeMenuItems" popup />
-                <Menu ref="itemMenu" :model="itemMenuItems" popup class="item-menu" />
-                <span
-                    v-if="shop.queue.length || shop.isOffline"
-                    v-tooltip.bottom="t('shop.status.offline_hint', { time: savedTime })"
-                    class="status offline"
-                    :aria-label="
-                        shop.queue.length
-                            ? t('shop.status.pending', shop.queue.length)
-                            : t('shop.status.offline')
-                    "
-                >
-                    <i :class="shop.queue.length ? Icons.refresh : Icons.wifiOff" />
-                    <template v-if="shop.queue.length">{{ shop.queue.length }}</template>
-                </span>
-                <span
-                    v-else-if="shop.isLive"
-                    v-tooltip.bottom="t('shop.status.live_hint')"
-                    class="status live"
-                    :aria-label="t('shop.status.live')"
-                >
-                    <span class="dot" />
-                </span>
-                <button
-                    v-if="shop.stores.length"
-                    v-tooltip.left="t('shop.filter')"
-                    type="button"
-                    class="filter"
-                    :class="{ active: shop.storeId }"
-                    :aria-label="t('shop.filter')"
-                    aria-haspopup="true"
-                    @click="storeMenu?.toggle($event)"
-                >
-                    <!-- Filled while a store filter is on -->
-                    <i :class="shop.storeId ? Icons.filterFill : Icons.filter" />
-                </button>
-                <div
-                    v-if="total"
-                    class="bar"
-                    role="progressbar"
-                    :aria-valuenow="done"
-                    :aria-valuemax="total"
-                >
-                    <div class="fill" :style="{ width: `${(done / total) * 100}%` }" />
+            <!-- One slim bar, in the app's top bar: the list starts right below it -->
+            <TopBar>
+                <div class="toolbar">
+                    <span
+                        v-if="total"
+                        class="count"
+                        :aria-label="t('shop.progress', { done, total })"
+                    >
+                        {{ t('shop.progress_short', { done, total }) }}
+                    </span>
+                    <!-- The store filter lives behind the filter button, but stays visible when on -->
+                    <span v-if="shop.storeId" class="active-store">
+                        <i :class="Icons.shop" />{{ storeLabel }}
+                    </span>
+                    <span class="spacer" />
+                    <Menu ref="storeMenu" :model="storeMenuItems" popup />
+                    <Menu ref="itemMenu" :model="itemMenuItems" popup class="item-menu" />
+                    <span
+                        v-if="shop.queue.length || shop.isOffline"
+                        v-tooltip.bottom="t('shop.status.offline_hint', { time: savedTime })"
+                        class="status offline"
+                        :aria-label="
+                            shop.queue.length
+                                ? t('shop.status.pending', shop.queue.length)
+                                : t('shop.status.offline')
+                        "
+                    >
+                        <i :class="shop.queue.length ? Icons.refresh : Icons.wifiOff" />
+                        <template v-if="shop.queue.length">{{ shop.queue.length }}</template>
+                    </span>
+                    <span
+                        v-else-if="shop.isLive"
+                        v-tooltip.bottom="t('shop.status.live_hint')"
+                        class="status live"
+                        :aria-label="t('shop.status.live')"
+                    >
+                        <span class="dot" />
+                    </span>
+                    <button
+                        v-if="shop.stores.length"
+                        v-tooltip.left="t('shop.filter')"
+                        type="button"
+                        class="filter"
+                        :class="{ active: shop.storeId }"
+                        :aria-label="t('shop.filter')"
+                        aria-haspopup="true"
+                        @click="storeMenu?.toggle($event)"
+                    >
+                        <!-- Filled while a store filter is on -->
+                        <i :class="shop.storeId ? Icons.filterFill : Icons.filter" />
+                    </button>
+                    <div
+                        v-if="total"
+                        class="bar"
+                        role="progressbar"
+                        :aria-valuenow="done"
+                        :aria-valuemax="total"
+                    >
+                        <div class="fill" :style="{ width: `${(done / total) * 100}%` }" />
+                    </div>
                 </div>
-            </div>
+            </TopBar>
 
             <EmptyState
                 v-if="total === 0"
@@ -344,16 +353,11 @@ useEventListener(document, 'visibilitychange', () => {
 
 // Sticky, so the store and the count stay in reach while scrolling the list
 .toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    flex: 1;
     display: flex;
     align-items: center;
     gap: $spacing-sm;
-    min-height: calc($touch-target + $spacing-sm + env(safe-area-inset-top));
-    margin: (-$spacing-md) (-$spacing-md) $spacing-sm;
-    padding: calc($spacing-xs + env(safe-area-inset-top)) $spacing-md $spacing-xs;
-    background: $background-color;
+    min-width: 0;
 
     .active-store {
         display: inline-flex;
