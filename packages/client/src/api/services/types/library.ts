@@ -11,5 +11,8 @@ export type {
     Ingredient,
     IngredientRequest,
     Store,
+    StoreCard,
+    StoreCardFormat,
+    StoreCardRequest,
     StoreRequest,
 } from '@/api/generated/schema';

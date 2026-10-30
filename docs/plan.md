@@ -98,6 +98,11 @@ home.
   ("500 g") and "voor 2 gerechten" when more than one dish needs it.
 - Ticking an item into the cart shows an undo bar above the navigation for 5 seconds.
 - The screen stays on in shop mode (Screen Wake Lock, where the browser supports it).
+- Loyalty cards: one per store, shared by the household. Added on the store's page by scanning
+  the card (or the code in the store's app) with the camera, or by typing the number and code
+  type. Shop mode shows it from a card button in the top bar, the store being shopped first;
+  it comes with the cached stores, so it works offline. Shown dark on light in both schemes.
+  Supported: EAN-13/8, UPC-A, Code 128/39, ITF, Codabar and QR.
 - Works offline: the active list is cached on the device and ticks made offline are synced when the
   connection is back. Two people can shop at the same time (e.g. in two stores): ticks show up live
   for the other (SSE). Conflicting changes: the last tick wins.

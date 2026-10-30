@@ -12,6 +12,9 @@
     // Badges and banners: a saffron surface with readable text on it ("needed soon", offline)
     --app-saffron-surface: #f6dfb5;
     --app-on-saffron-surface: #6b4209;
+    // Barcodes and QR codes: dark on light in both schemes, the way scanners read them
+    --app-code-dark: #000000;
+    --app-code-light: #ffffff;
     color-scheme: light;
 }
 

@@ -32,4 +32,6 @@ export const Icons = {
     move: 'pi pi-arrows-v',
     undo: 'pi pi-undo',
     tags: 'pi pi-tags',
+    card: 'pi pi-id-card',
+    camera: 'pi pi-camera',
 } as const;

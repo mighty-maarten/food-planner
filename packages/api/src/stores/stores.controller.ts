@@ -23,7 +23,7 @@ import { CategoryOrderRequest } from '../categories/types.js';
 import { ErrorResponse } from '../common/error-response.js';
 import { routeParams } from '../route-params.js';
 import { StoresService } from './stores.service.js';
-import { Store, StoreRequest } from './types.js';
+import { Store, StoreCardRequest, StoreRequest } from './types.js';
 
 @ApiTags('stores')
 @ApiBearerAuth()
@@ -65,6 +65,25 @@ export class StoresController {
         @Body() request: CategoryOrderRequest,
     ): Promise<Store> {
         return this.storesService.updateStoreCategoryOrder(storeId, request.categoryIds);
+    }
+
+    @Put(`:${routeParams.storeId}/card`)
+    @ApiOperation({ summary: "Set the household's loyalty card of the store" })
+    @ApiOkResponse({ type: Store })
+    @ApiNotFoundResponse({ type: ErrorResponse })
+    setStoreCard(
+        @Param(routeParams.storeId, ParseUUIDPipe) storeId: string,
+        @Body() request: StoreCardRequest,
+    ): Promise<Store> {
+        return this.storesService.setStoreCard(storeId, request);
+    }
+
+    @Delete(`:${routeParams.storeId}/card`)
+    @ApiOperation({ summary: 'Remove the loyalty card of the store' })
+    @ApiOkResponse({ type: Store })
+    @ApiNotFoundResponse({ type: ErrorResponse })
+    deleteStoreCard(@Param(routeParams.storeId, ParseUUIDPipe) storeId: string): Promise<Store> {
+        return this.storesService.setStoreCard(storeId, null);
     }
 
     @Delete(`:${routeParams.storeId}`)

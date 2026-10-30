@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import ReorderList from '@/components/ReorderList.vue';
+import StoreCardSection from '@/components/StoreCardSection.vue';
 import { useToastMessages } from '@/composables/toast';
 import { useCatalogueStore } from '@/stores/catalogue';
 import { buildRoute } from '@/router/utils';
@@ -109,6 +110,8 @@ async function deleteStore(storeName: string) {
                     />
                 </div>
             </form>
+
+            <StoreCardSection :store="store" />
 
             <section>
                 <h3>{{ t('stores.route') }}</h3>

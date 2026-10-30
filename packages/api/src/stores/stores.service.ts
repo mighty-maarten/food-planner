@@ -8,7 +8,7 @@ import { DatabaseHelper } from '../database/database.helper.js';
 import { StoreCategoryPositionEntity } from '../database/entities/store-category-position.entity.js';
 import { StoreEntity } from '../database/entities/store.entity.js';
 import { resolveCategoryOrder } from './category-order.js';
-import { Store, type StoreRequest } from './types.js';
+import { cardCodeError, Store, type StoreCardRequest, type StoreRequest } from './types.js';
 
 @Injectable()
 export class StoresService {
@@ -68,6 +68,20 @@ export class StoresService {
             throw StoresService.notFound(storeId);
         }
         this.logger.log('Store deleted', { storeId });
+    }
+
+    /** Sets the loyalty card of the store, or removes it (null) */
+    public async setStoreCard(storeId: string, request: StoreCardRequest | null): Promise<Store> {
+        const store = await this.getEntity(storeId);
+        if (request) {
+            const error = cardCodeError(request.code, request.format);
+            if (error) throw ApiException.invalidRequest(error);
+        }
+        store.cardCode = request?.code ?? null;
+        store.cardFormat = request?.format ?? null;
+        await this.save(store);
+        this.logger.log(request ? 'Store card set' : 'Store card removed', { storeId });
+        return this.getStore(storeId);
     }
 
     /** Sets the route through the store */

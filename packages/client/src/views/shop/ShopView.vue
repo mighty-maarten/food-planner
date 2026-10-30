@@ -6,6 +6,7 @@ import type { MenuItem } from 'primevue/menuitem';
 import { useEventListener, useWakeLock } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/components/EmptyState.vue';
+import StoreCardDialog from '@/components/StoreCardDialog.vue';
 import TopBar from '@/components/TopBar.vue';
 import type { ListItem } from '@/api/services/types/plans';
 import { useAuthStore } from '@/stores/auth';
@@ -38,6 +39,10 @@ const savedTime = computed(() =>
 );
 
 const { infoToast } = useToastMessages();
+
+// Loyalty cards, from the cached stores: also there without a connection
+const cardStores = computed(() => shop.stores.filter((store) => store.card));
+const cardVisible = ref(false);
 
 const storeMenu = ref<InstanceType<typeof Menu>>();
 const itemMenu = ref<InstanceType<typeof Menu>>();
@@ -246,10 +251,21 @@ useEventListener(document, 'visibilitychange', () => {
                         <span class="dot" />
                     </span>
                     <button
+                        v-if="cardStores.length"
+                        v-tooltip.left="t('cards.show')"
+                        type="button"
+                        class="tool"
+                        :aria-label="t('cards.show')"
+                        aria-haspopup="dialog"
+                        @click="cardVisible = true"
+                    >
+                        <i :class="Icons.card" />
+                    </button>
+                    <button
                         v-if="shop.stores.length"
                         v-tooltip.left="t('shop.filter')"
                         type="button"
-                        class="filter"
+                        class="tool filter"
                         :class="{ active: shop.storeId }"
                         :aria-label="t('shop.filter')"
                         aria-haspopup="true"
@@ -383,6 +399,11 @@ useEventListener(document, 'visibilitychange', () => {
                 </section>
             </template>
         </template>
+        <StoreCardDialog
+            v-model:visible="cardVisible"
+            :stores="cardStores"
+            :preferred-store-id="shop.storeId"
+        />
         <Transition name="undo">
             <div v-if="undoItem" class="undo-bar" role="status">
                 <span class="text">{{ t('shop.undo.checked', { name: undoItem.name }) }}</span>
@@ -430,13 +451,12 @@ useEventListener(document, 'visibilitychange', () => {
         }
     }
 
-    .filter {
+    .tool {
         display: grid;
         place-items: center;
         flex-shrink: 0;
         width: $touch-target;
         height: $touch-target;
-        margin-right: -$spacing-sm;
         border: none;
         border-radius: $radius-full;
         background: none;
@@ -455,6 +475,10 @@ useEventListener(document, 'visibilitychange', () => {
         i {
             font-size: inherit;
         }
+    }
+
+    .filter {
+        margin-right: -$spacing-sm;
     }
 
     .spacer {
