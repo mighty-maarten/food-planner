@@ -315,5 +315,40 @@
             "confirm": "Wil je “{name}” verwijderen? Ingrediënten die je daar koopt, blijven bestaan.",
             "done": "Winkel verwijderd"
         }
+    },
+    "cards": {
+        "title": "Klantenkaart",
+        "hint": "Je klantenkaart staat dan in Winkelen klaar voor de kassa, ook zonder verbinding.",
+        "show": "Klantenkaart tonen",
+        "choose": "Kies een winkel",
+        "brightness_hint": "Leest de kassa hem niet? Zet je scherm feller.",
+        "invalid": "Deze code kan niet getoond worden. Scan de kaart opnieuw of typ het nummer.",
+        "number": "Kaartnummer",
+        "number_invalid": "Dit nummer past niet bij het type code.",
+        "format": "Type code",
+        "type_instead": "Nummer typen",
+        "scan_again": "Opnieuw scannen",
+        "saved": "Klantenkaart opgeslagen",
+        "removed": "Klantenkaart verwijderd",
+        "remove": "Klantenkaart verwijderen",
+        "remove_confirm": "Wil je de klantenkaart van {store} verwijderen?",
+        "scan": {
+            "action": "Kaart scannen",
+            "title": "Klantenkaart {store}",
+            "hint": "Houd de streepjescode of QR-code van de kaart (of uit de app van de winkel) in het kader.",
+            "unsupported": "Deze code wordt niet ondersteund. Typ het nummer en kies het type.",
+            "denied": "Geen toegang tot de camera. Sta het toe in de instellingen, of typ het nummer.",
+            "failed": "De camera kon niet starten. Typ het nummer in de plaats."
+        },
+        "formats": {
+            "ean13": "Streepjescode (EAN-13)",
+            "qr": "QR-code",
+            "code128": "Streepjescode (Code 128)",
+            "ean8": "Streepjescode (EAN-8)",
+            "upca": "Streepjescode (UPC-A)",
+            "code39": "Streepjescode (Code 39)",
+            "itf": "Streepjescode (ITF)",
+            "codabar": "Streepjescode (Codabar)"
+        }
     }
 }

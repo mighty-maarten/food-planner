@@ -1,5 +1,5 @@
 import { HttpClient } from '@/api/http-client';
-import type { Store, StoreRequest } from './types/library';
+import type { Store, StoreCardRequest, StoreRequest } from './types/library';
 
 class ApiUrls {
     public static stores = '/stores';
@@ -23,6 +23,14 @@ export class StoresApi {
         categoryIds: string[],
     ): Promise<Store> {
         return HttpClient.put<Store>(`${ApiUrls.stores}/${id}/category-order`, { categoryIds });
+    }
+
+    public static async setStoreCard(id: string, request: StoreCardRequest): Promise<Store> {
+        return HttpClient.put<Store>(`${ApiUrls.stores}/${id}/card`, request);
+    }
+
+    public static async deleteStoreCard(id: string): Promise<Store> {
+        return HttpClient.delete<Store>(`${ApiUrls.stores}/${id}/card`);
     }
 
     public static async deleteStore(id: string): Promise<void> {

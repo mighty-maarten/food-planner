@@ -221,6 +221,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/api/stores/{storeId}/card': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the household's loyalty card of the store */
+        put: operations['setStoreCard'];
+        post?: never;
+        /** Remove the loyalty card of the store */
+        delete: operations['deleteStoreCard'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/api/ingredients': {
         parameters: {
             query?: never;
@@ -567,14 +585,29 @@ export interface components {
             /** @description Every category id, in the new order. */
             categoryIds: string[];
         };
+        /** @enum {string} */
+        StoreCardFormat:
+            'qr' | 'ean13' | 'ean8' | 'upca' | 'code128' | 'code39' | 'itf' | 'codabar';
+        StoreCard: {
+            /** @description The number or text in the code. */
+            code: string;
+            format: components['schemas']['StoreCardFormat'];
+        };
         Store: {
             id: string;
             name: string;
             /** @description Every category id in the order of the route through this store. Categories without a position in this store follow in their default order. */
             categoryIds: string[];
+            /** @description The household's loyalty card. */
+            card: components['schemas']['StoreCard'] | null;
         };
         StoreRequest: {
             name: string;
+        };
+        StoreCardRequest: {
+            /** @description The number or text in the code. */
+            code: string;
+            format: components['schemas']['StoreCardFormat'];
         };
         Ingredient: {
             id: string;
@@ -794,8 +827,11 @@ export type AuthResponse = components['schemas']['AuthResponse'];
 export type Category = components['schemas']['Category'];
 export type CategoryRequest = components['schemas']['CategoryRequest'];
 export type CategoryOrderRequest = components['schemas']['CategoryOrderRequest'];
+export type StoreCardFormat = components['schemas']['StoreCardFormat'];
+export type StoreCard = components['schemas']['StoreCard'];
 export type Store = components['schemas']['Store'];
 export type StoreRequest = components['schemas']['StoreRequest'];
+export type StoreCardRequest = components['schemas']['StoreCardRequest'];
 export type Ingredient = components['schemas']['Ingredient'];
 export type IngredientRequest = components['schemas']['IngredientRequest'];
 export type DishListItem = components['schemas']['DishListItem'];
@@ -1286,6 +1322,68 @@ export interface operations {
                 'application/json': components['schemas']['CategoryOrderRequest'];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Store'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    setStoreCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['StoreCardRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Store'];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['ErrorResponse'];
+                };
+            };
+        };
+    };
+    deleteStoreCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

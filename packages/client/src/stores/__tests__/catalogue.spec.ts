@@ -23,7 +23,7 @@ const categories = [
     { id: 'fruit', name: 'Groenten & fruit', position: 1 },
     { id: 'dairy', name: 'Zuivel', position: 2 },
 ];
-const store = { id: 'store-1', name: 'Colruyt', categoryIds: ['fruit', 'dairy'] };
+const store = { id: 'store-1', name: 'Colruyt', categoryIds: ['fruit', 'dairy'], card: null };
 const yoghurt = {
     id: 'yoghurt',
     name: 'Yoghurt',

@@ -4,7 +4,13 @@ import { useStoreCreationUtils } from './util';
 import { CategoriesApi } from '@/api/services/categories-api';
 import { StoresApi } from '@/api/services/stores-api';
 import { IngredientsApi } from '@/api/services/ingredients-api';
-import type { Category, Ingredient, IngredientRequest, Store } from '@/api/services/types/library';
+import type {
+    Category,
+    Ingredient,
+    IngredientRequest,
+    Store,
+    StoreCardRequest,
+} from '@/api/services/types/library';
 import { ArrayUtil } from '@/utils/array';
 import { TextUtil } from '@/utils/text';
 
@@ -20,6 +26,7 @@ export const useCatalogueStore = defineStore('catalogue', () => {
             'deleteCategory',
             'saveStore',
             'deleteStore',
+            'saveCard',
             'saveIngredient',
             'deleteIngredient',
             'reorder',
@@ -137,6 +144,18 @@ export const useCatalogueStore = defineStore('catalogue', () => {
         return result ?? false;
     }
 
+    /** Sets the loyalty card of a store, or removes it (null) */
+    async function setStoreCard(id: string, card: StoreCardRequest | null): Promise<boolean> {
+        const result = await handleAction('saveCard', id, async () => {
+            const updated = card
+                ? await StoresApi.setStoreCard(id, card)
+                : await StoresApi.deleteStoreCard(id);
+            ArrayUtil.replaceByMut(stores.value, (s) => s.id === id, updated);
+            return true;
+        });
+        return !!result;
+    }
+
     /** Changes the route through a store, shown immediately and rolled back when saving fails */
     async function updateStoreCategoryOrder(id: string, categoryIds: string[]): Promise<void> {
         const store = storeById.value.get(id);
@@ -207,6 +226,7 @@ export const useCatalogueStore = defineStore('catalogue', () => {
         updateStore,
         deleteStore,
         updateStoreCategoryOrder,
+        setStoreCard,
         createIngredient,
         updateIngredient,
         deleteIngredient,

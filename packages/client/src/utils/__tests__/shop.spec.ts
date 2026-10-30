@@ -36,8 +36,8 @@ const categories = [
 ];
 // Colruyt: frozen first, then dairy, then fruit
 const stores = [
-    { id: 'colruyt', name: 'Colruyt', categoryIds: ['frozen', 'dairy', 'fruit'] },
-    { id: 'delhaize', name: 'Delhaize', categoryIds: ['fruit', 'dairy', 'frozen'] },
+    { id: 'colruyt', name: 'Colruyt', categoryIds: ['frozen', 'dairy', 'fruit'], card: null },
+    { id: 'delhaize', name: 'Delhaize', categoryIds: ['fruit', 'dairy', 'frozen'], card: null },
 ];
 
 const items = [
