@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { Button, Menu, ProgressSpinner } from 'primevue';
 import type { MenuItem } from 'primevue/menuitem';
 import { useEventListener, useWakeLock } from '@vueuse/core';
@@ -19,6 +19,7 @@ import { useToastMessages } from '@/composables/toast';
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 const shop = useShopStore();
 const authStore = useAuthStore();
 
@@ -42,7 +43,20 @@ const { infoToast } = useToastMessages();
 
 // Loyalty cards, from the cached stores: also there without a connection
 const cardStores = computed(() => shop.stores.filter((store) => store.card));
-const cardVisible = ref(false);
+// Open as a history entry (?kaart), so the phone's back button closes the cards, not shop mode
+const cardVisible = computed({
+    get: () => route.query.kaart !== undefined,
+    set: (open) => {
+        if (open) {
+            void router.push({ query: { ...route.query, kaart: null } });
+        } else if (window.history.state?.back) {
+            router.back();
+        } else {
+            // Opened from a link: there is no shop mode behind it to go back to
+            void router.replace({ query: { ...route.query, kaart: undefined } });
+        }
+    },
+});
 
 const storeMenu = ref<InstanceType<typeof Menu>>();
 const itemMenu = ref<InstanceType<typeof Menu>>();
