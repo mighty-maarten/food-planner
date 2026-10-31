@@ -321,6 +321,7 @@
         "hint": "Je klantenkaart staat dan in Winkelen klaar voor de kassa, ook zonder verbinding.",
         "show": "Klantenkaart tonen",
         "choose": "Kies een winkel",
+        "pager": "carrousel",
         "brightness_hint": "Leest de kassa hem niet? Zet je scherm feller.",
         "invalid": "Deze code kan niet getoond worden. Scan de kaart opnieuw of typ het nummer.",
         "number": "Kaartnummer",
