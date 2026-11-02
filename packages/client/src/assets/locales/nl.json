@@ -58,6 +58,15 @@
             "list": "Boodschappen"
         },
         "today": "Vandaag",
+        "view": {
+            "days": "Dag per dag tonen",
+            "list": "Alle dagen tonen"
+        },
+        "carousel": {
+            "days": "Dagen van het weekmenu",
+            "choose_day": "Kies een dag",
+            "pager": "carrousel"
+        },
         "dates": {
             "title_new": "Nieuw weekmenu",
             "title_edit": "Data wijzigen",

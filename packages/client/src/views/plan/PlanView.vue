@@ -9,6 +9,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import TopBar from '@/components/TopBar.vue';
 import { useIsPhone } from '@/composables/sheet-dialog';
 import DayCard from '@/components/plan/DayCard.vue';
+import DayCarousel from '@/components/plan/DayCarousel.vue';
 import DishPickerDialog from '@/components/plan/DishPickerDialog.vue';
 import MoveDayDialog from '@/components/plan/MoveDayDialog.vue';
 import PlanDatesDialog from '@/components/plan/PlanDatesDialog.vue';
@@ -73,7 +74,40 @@ const tabOptions = computed(() => [
     },
 ]);
 
+// All days below each other, or one day at a time: a preference of this device
+const VIEW_KEY = 'fp_plan_view';
+function readView(): 'list' | 'days' {
+    try {
+        return localStorage.getItem(VIEW_KEY) === 'days' ? 'days' : 'list';
+    } catch {
+        return 'list';
+    }
+}
+const view = ref(readView());
+function toggleView() {
+    view.value = view.value === 'list' ? 'days' : 'list';
+    try {
+        localStorage.setItem(VIEW_KEY, view.value);
+    } catch {
+        // Not remembered (private mode): the view still changes
+    }
+}
+
+// The day in view, in the URL like the tab: back on it after editing a dish
+const carouselDate = computed({
+    get: () => (typeof route.query.dag === 'string' ? route.query.dag : null),
+    set: (date: string | null) => {
+        void router.replace({ query: { ...route.query, dag: date ?? undefined } });
+    },
+});
+
 const menuItems = computed<MenuItem[]>(() => [
+    {
+        label: view.value === 'list' ? t('plan.view.days') : t('plan.view.list'),
+        icon: view.value === 'list' ? Icons.clone : Icons.list,
+        command: toggleView,
+    },
+    { separator: true },
     {
         label: t('plan.edit_dates'),
         icon: Icons.calendar,
@@ -268,7 +302,17 @@ async function deletePlan(id: string, range: string) {
                 class="tabs"
             />
 
-            <div v-if="tab === 'menu'" class="days">
+            <DayCarousel
+                v-if="tab === 'menu' && view === 'days'"
+                :key="plan.id"
+                v-model:date="carouselDate"
+                :plan-id="plan.id"
+                :days="plan.days"
+                :today="today"
+                @choose-dish="chooseDish"
+                @move="openMove"
+            />
+            <div v-else-if="tab === 'menu'" class="days">
                 <DayCard
                     v-for="day in plan.days"
                     :key="day.date"

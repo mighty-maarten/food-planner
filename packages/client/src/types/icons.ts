@@ -27,6 +27,7 @@ export const Icons = {
     shop: 'pi pi-shop',
     tag: 'pi pi-tag',
     list: 'pi pi-list',
+    clone: 'pi pi-clone',
     file: 'pi pi-file',
     refresh: 'pi pi-refresh',
     move: 'pi pi-arrows-v',
